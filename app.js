@@ -1,5 +1,5 @@
 /* =========================================================
-   QuizPro — Engine v2 (Markdown + LaTeX + Mini-games)
+   QuizPro — Engine v3 (Markdown + LaTeX + Mini-games + TF đa phát biểu)
    ========================================================= */
 'use strict';
 
@@ -64,7 +64,7 @@ function normShort(str) {
 }
 
 /* =========================================================
-   ÂM THANH — Nhạc nền + SFX
+   ÂM THANH
    ========================================================= */
 const bgm = document.getElementById('bgMusic');
 const clickSfx = document.getElementById('clickSfx');
@@ -132,7 +132,7 @@ function applyMath(el) {
 }
 
 /* =========================================================
-   MODAL HELPERS (dùng chung)
+   MODAL HELPERS
    ========================================================= */
 function openModal(id) { const el = document.getElementById(id); if (el) el.classList.add('show'); }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('show'); }
@@ -340,6 +340,17 @@ function bindImportActions() {
           ],
           explain: "a) Đúng — nén nhanh sinh công lên khí. b) Sai — dãn nở tự do, nội năng khí lý tưởng không đổi. c) Đúng. d) Đúng."
         },
+        { type: "truefalse",
+          question: "Cho phương trình $x^2 - 3x + 2 = 0$. Xét các khẳng định (đề này **allOrNothing**):",
+          allOrNothing: true,
+          statements: [
+            { text: "Phương trình có 2 nghiệm phân biệt.", answer: true },
+            { text: "Tổng hai nghiệm bằng $3$.", answer: true },
+            { text: "Tích hai nghiệm bằng $2$.", answer: true },
+            { text: "Cả hai nghiệm đều dương.", answer: true }
+          ],
+          explain: "$x^2 - 3x + 2 = (x-1)(x-2) = 0 \\Rightarrow x \\in \\{1, 2\\}$. Cả 4 ý đều đúng."
+        },
         { type: "short",
           question: "Nghiệm của phương trình $x^2 - 5x + 6 = 0$ (nhập số lớn hơn)?",
           answers: ["3"],
@@ -366,7 +377,7 @@ function bindImportActions() {
       exams.push(ex);
       added.push(ex.title);
     }
-    if (!added.length) { toast('Không đọc được đề nào (thiếu "questions"?)', 'err'); return; }
+    if (!added.length) { toast('Không đọc được đề nào (thiếu "questions"? hoặc sai format)', 'err'); return; }
     store.set(K.exams, exams);
     closeImport();
     $('importArea').value = '';
@@ -385,13 +396,21 @@ function bindImportActions() {
   };
 }
 
+/* =========================================================
+   NORMALIZE — hỗ trợ TF đa phát biểu (statements[])
+   ========================================================= */
 function normalizeExam(raw) {
   if (!raw || typeof raw !== 'object') return null;
   if (!Array.isArray(raw.questions) || !raw.questions.length) return null;
   const questions = raw.questions.map(q => {
     if (!q || typeof q !== 'object') return null;
     const type = String(q.type || '').toLowerCase();
-    const base = { question: String(q.question || q.q || '').trim(), explain: q.explain || q.explanation || '' };
+    const base = {
+      question: String(q.question || q.q || '').trim(),
+      explain: q.explain || q.explanation || ''
+    };
+
+    // ---------- MCQ ----------
     if (type === 'mcq' || type === 'tracnghiem' || type === 'multiple-choice') {
       const options = Array.isArray(q.options) ? q.options.map(String) : [];
       if (options.length < 2) return null;
@@ -404,25 +423,32 @@ function normalizeExam(raw) {
       if (!Number.isInteger(answer) || answer < 0 || answer >= options.length) return null;
       return { ...base, type: 'mcq', options, answer };
     }
+
+    // ---------- TRUE/FALSE ----------
     if (type === 'truefalse' || type === 'true-false' || type === 'dungsai' || type === 'tf') {
-      // ===== FORMAT MỚI: statements[] =====
+      // NEW: statements[]
       if (Array.isArray(q.statements) && q.statements.length > 0) {
         const statements = q.statements.map(s => {
           if (!s || typeof s !== 'object') return null;
           let a = s.answer;
           if (typeof a === 'string') a = /^(true|đúng|dung|t|1|yes)$/i.test(a.trim());
           if (typeof a !== 'boolean') return null;
-          return { text: String(s.text || s.statement || s.content || '').trim(), answer: a };
+          return {
+            text: String(s.text || s.statement || s.content || '').trim(),
+            answer: a
+          };
         }).filter(s => s && s.text);
         if (!statements.length) return null;
         return { ...base, type: 'truefalse', statements, allOrNothing: !!q.allOrNothing };
       }
-      // ===== FORMAT CŨ: answer boolean =====
+      // OLD: answer boolean
       let a = q.answer;
       if (typeof a === 'string') a = /^(true|đúng|dung|t|1|yes)$/i.test(a.trim());
       if (typeof a !== 'boolean') return null;
       return { ...base, type: 'truefalse', answer: a };
     }
+
+    // ---------- SHORT ----------
     if (type === 'short' || type === 'traloinngan' || type === 'fill' || type === 'text') {
       let answers = q.answers || q.accepted || (q.answer !== undefined ? [q.answer] : []);
       if (!Array.isArray(answers)) answers = [answers];
@@ -441,6 +467,7 @@ function normalizeExam(raw) {
     questions
   };
 }
+
 /* =========================================================
    EXAM SESSION
    ========================================================= */
@@ -461,7 +488,12 @@ function startExam(examId) {
     endsAt: 0,
     timerId: null
   };
-  exam.questions.forEach((q, i) => { if (q.type === 'short') session.answers[i] = ''; });
+  exam.questions.forEach((q, i) => {
+    if (q.type === 'short') session.answers[i] = '';
+    else if (q.type === 'truefalse' && Array.isArray(q.statements)) {
+      session.answers[i] = new Array(q.statements.length).fill(null);
+    }
+  });
   $('examName').textContent = exam.title;
   showScreen('screen-exam');
   startTimer();
@@ -552,25 +584,32 @@ function renderQuestion() {
   applyMath($('qContainer'));
 
   $('qContainer').querySelectorAll('[data-opt]').forEach(b => {
-    b.onclick = () => { playClick(); session.answers[session.index] = Number(b.dataset.opt); renderQuestion(); };
+    b.onclick = () => {
+      playClick();
+      session.answers[session.index] = Number(b.dataset.opt);
+      renderQuestion();
+    };
   });
 
-  // Cũ: 1 nút true/false
   $('qContainer').querySelectorAll('[data-tf]').forEach(b => {
-    b.onclick = () => { playClick(); session.answers[session.index] = b.dataset.tf === 'true'; renderQuestion(); };
+    b.onclick = () => {
+      playClick();
+      session.answers[session.index] = b.dataset.tf === 'true';
+      renderQuestion();
+    };
   });
 
-  // Mới: nút theo từng ý
   $('qContainer').querySelectorAll('[data-stmt]').forEach(b => {
     b.onclick = () => {
       playClick();
       const sIdx = Number(b.dataset.stmt);
       const sVal = b.dataset.val === '1';
-      const curArr = session.answers[session.index];
+      let curArr = session.answers[session.index];
       if (!Array.isArray(curArr) || curArr.length !== q.statements.length) {
-        session.answers[session.index] = new Array(q.statements.length).fill(null);
+        curArr = new Array(q.statements.length).fill(null);
       }
-      session.answers[session.index][sIdx] = sVal;
+      curArr[sIdx] = sVal;
+      session.answers[session.index] = curArr;
       renderQuestion();
     };
   });
@@ -586,13 +625,15 @@ function renderQuestion() {
   $('progBar').style.width = ((index + 1) / exam.questions.length * 100) + '%';
   renderPalette();
 }
+
 function renderPalette() {
   const { exam, answers, index } = session;
   $('palette').innerHTML = exam.questions.map((q, i) => {
     const a = answers[i];
     let done;
     if (q.type === 'truefalse' && Array.isArray(q.statements)) {
-      done = Array.isArray(a) && a.length === q.statements.length && a.every(x => x === true || x === false);
+      done = Array.isArray(a) && a.length === q.statements.length
+             && a.every(x => x === true || x === false);
     } else if (q.type === 'short') {
       done = String(a || '').trim() !== '';
     } else {
@@ -602,20 +643,27 @@ function renderPalette() {
     return `<button class="pal ${cls}" data-go="${i}">${i + 1}</button>`;
   }).join('');
   $('palette').querySelectorAll('[data-go]').forEach(b => {
-    b.onclick = () => { playClick(); session.index = Number(b.dataset.go); renderQuestion(); };
+    b.onclick = () => {
+      playClick();
+      session.index = Number(b.dataset.go);
+      renderQuestion();
+    };
   });
 }
+
 /* =========================================================
-   GRADING
+   GRADING — partial credit cho TF đa phát biểu
    ========================================================= */
 function grade(exam, answers) {
   let correct = 0;
   const details = exam.questions.map((q, i) => {
     const given = answers[i];
     let ok = false;
+
     if (q.type === 'mcq') {
       ok = given === q.answer;
       if (ok) correct++;
+
     } else if (q.type === 'truefalse') {
       if (Array.isArray(q.statements) && q.statements.length > 0) {
         const n = q.statements.length;
@@ -625,14 +673,15 @@ function grade(exam, answers) {
             ok = matched === n;
             if (ok) correct++;
           } else {
-            ok = matched === n;             // icon ✓ chỉ khi đúng hết
-            correct += matched / n;         // điểm từng phần
+            ok = matched === n;
+            correct += matched / n;
           }
         }
       } else {
         ok = given === q.answer;
         if (ok) correct++;
       }
+
     } else if (q.type === 'short') {
       const g = String(given ?? '').trim();
       if (!g) ok = false;
@@ -640,10 +689,12 @@ function grade(exam, answers) {
       else { const ng = normShort(g); ok = ng !== '' && q.answers.some(a => normShort(a) === ng); }
       if (ok) correct++;
     }
+
     return { ok, given };
   });
   return { correct, total: exam.questions.length, details };
 }
+
 function submitExam(auto) {
   if (!session) return;
   clearInterval(session.timerId);
@@ -737,7 +788,7 @@ function renderResult(exam, result, timeSpent, gained, auto) {
         </div>`;
     }
 
-    // ===== NHÁNH CŨ: giữ nguyên logic cũ =====
+    // ===== NHÁNH CŨ =====
     let givenTxt = '—';
     if (q.type === 'mcq') {
       givenTxt = (d.given === null || d.given === undefined)
@@ -780,6 +831,7 @@ function renderResult(exam, result, timeSpent, gained, auto) {
   $('btnRedo').style.display = exams.some(e => e.id === examSnapshot.id) ? '' : 'none';
   if (gained) setTimeout(() => toast(`🔥 Chuỗi tăng lên ${streak.count} ngày!`, 'ok'), 700);
 }
+
 /* =========================================================
    MINI GAMES
    ========================================================= */
@@ -1055,10 +1107,9 @@ function startReaction() {
 }
 
 /* =========================================================
-   EVENT BINDING (chạy 1 lần)
+   EVENT BINDING
    ========================================================= */
 function bindMainEvents() {
-  // Exam list: Bắt đầu / Xoá
   $('examList').addEventListener('click', e => {
     const item = e.target.closest('.exam-item');
     if (!item) return;
@@ -1092,7 +1143,6 @@ function bindMainEvents() {
     }
   });
 
-  // Nút thoát bài thi
   $('btnQuit').onclick = () => {
     playClick();
     showConfirm({
@@ -1112,7 +1162,6 @@ function bindMainEvents() {
     });
   };
 
-  // Nút nộp bài
   $('btnSubmit').onclick = () => {
     playClick();
     const total = session.exam.questions.length;
@@ -1125,6 +1174,7 @@ function bindMainEvents() {
       return a === null || a === undefined ||
              (q.type === 'short' && String(a).trim() === '');
     }).length;
+    const done = total - unanswered;
 
     if (unanswered > 0) {
       showConfirm({
@@ -1151,7 +1201,6 @@ function bindMainEvents() {
     }
   };
 
-  // Điều hướng câu hỏi
   $('btnPrev').onclick = () => {
     if (session.index > 0) { playClick(); session.index--; renderQuestion(); }
   };
@@ -1159,7 +1208,6 @@ function bindMainEvents() {
     if (session.index < session.exam.questions.length - 1) { playClick(); session.index++; renderQuestion(); }
   };
 
-  // Modal confirm: click nền + ESC để đóng
   $('confirmModal').addEventListener('click', e => {
     if (e.target.id === 'confirmModal') closeModal('confirmModal');
   });
@@ -1170,7 +1218,6 @@ function bindMainEvents() {
     }
   });
 
-  // Games
   $('btnGames').onclick = () => { playClick(); openGames(); };
   $('btnBackHome').onclick = () => {
     playClick();
@@ -1179,7 +1226,6 @@ function bindMainEvents() {
     renderHome();
   };
 
-  // Cảnh báo rời trang khi đang thi
   window.addEventListener('beforeunload', e => {
     if (session) { e.preventDefault(); e.returnValue = ''; }
   });
@@ -1196,7 +1242,7 @@ function init() {
   bindImportEvents();
   bindImportActions();
 
-  registerServiceWorker();  // ← thêm dòng này
+  registerServiceWorker();
 
   setInterval(() => {
     if ($('screen-home').classList.contains('active')) renderStreak();
@@ -1211,6 +1257,7 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
 /* =========================================================
    PWA — Đăng ký Service Worker
    ========================================================= */
@@ -1224,13 +1271,11 @@ function registerServiceWorker() {
     .then(reg => {
       console.log('[PWA] Đã đăng ký Service Worker:', reg.scope);
 
-      // Kiểm tra update mỗi khi mở app
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Có bản mới → hỏi user
             showConfirm({
               icon: '🎉',
               iconClass: 'info',
@@ -1250,7 +1295,6 @@ function registerServiceWorker() {
     })
     .catch(err => console.warn('[PWA] Đăng ký thất bại:', err));
 
-  // Tự reload khi SW mới kích hoạt
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
