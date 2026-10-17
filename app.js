@@ -1,5 +1,5 @@
 /* =========================================================
-   QuizPro — Engine v3 (Markdown + LaTeX + Mini-games + TF đa phát biểu)
+   QuizPro — Engine v3.1 (Shuffle + Đáp án label)
    ========================================================= */
 'use strict';
 
@@ -33,6 +33,14 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => 'ex_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 function toast(msg, type = '') {
   const t = $('toast');
@@ -95,7 +103,7 @@ if (bgm) {
 }
 
 /* =========================================================
-   RICH TEXT: Markdown + LaTeX
+   RICH TEXT
    ========================================================= */
 function rich(text) {
   if (text === null || text === undefined) return '';
@@ -132,7 +140,7 @@ function applyMath(el) {
 }
 
 /* =========================================================
-   MODAL HELPERS
+   MODAL
    ========================================================= */
 function openModal(id) { const el = document.getElementById(id); if (el) el.classList.add('show'); }
 function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('show'); }
@@ -261,12 +269,14 @@ function renderHome() {
     list.innerHTML = exams.map(ex => {
       const tries = history.filter(h => h.examId === ex.id);
       const best = tries.length ? Math.max(...tries.map(t => Math.round(t.correct / Math.max(1, t.total) * 100))) : null;
+      const shuffled = ex.shuffleQuestions || ex.shuffleOptions;
       return `
         <div class="exam-item" data-id="${ex.id}">
           <div class="exam-main">
             <div class="exam-title">${esc(ex.title)}</div>
             <div class="exam-meta">
               ${ex.subject ? `<span class="tag">${esc(ex.subject)}</span>` : ''}
+              ${shuffled ? `<span class="tag">🔀</span>` : ''}
               <span>${ex.questions.length} câu</span>
               ${ex.duration ? `<span>· ${ex.duration} phút</span>` : '<span>· không giới hạn</span>'}
               ${tries.length ? `<span>· đã làm ${tries.length} lần</span>` : ''}
@@ -320,15 +330,22 @@ function bindImportEvents() {
 function bindImportActions() {
   $('btnLoadDemo').onclick = () => {
     $('importArea').value = JSON.stringify({
-      title: "Đề mẫu — Đúng/Sai đa phát biểu",
+      title: "Đề mẫu v3.1 — Shuffle + TF đa phát biểu",
       subject: "Tổng hợp",
       duration: 5,
+      shuffle: true,
       questions: [
         { type: "mcq",
           question: "Công thức tính **động năng** là $E_k = \\frac{1}{2}mv^2$. Đại lượng **m** là gì?",
           options: ["Khối lượng", "Vận tốc", "Gia tốc", "Quãng đường"],
           answer: 0,
           explain: "Trong $E_k = \\frac{1}{2}mv^2$: **m** = khối lượng (kg), **v** = vận tốc (m/s)."
+        },
+        { type: "mcq",
+          question: "**Thủ đô** của Việt Nam là gì?",
+          options: ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Huế"],
+          answer: 0,
+          explain: "Hà Nội là thủ đô từ năm 1010 (thời Lý Thái Tổ dời đô)."
         },
         { type: "truefalse",
           question: "Xét các phát biểu sau về **nội năng** và quá trình biến đổi khí:",
@@ -397,11 +414,12 @@ function bindImportActions() {
 }
 
 /* =========================================================
-   NORMALIZE — hỗ trợ TF đa phát biểu (statements[])
+   NORMALIZE — hỗ trợ shuffle + TF đa phát biểu
    ========================================================= */
 function normalizeExam(raw) {
   if (!raw || typeof raw !== 'object') return null;
   if (!Array.isArray(raw.questions) || !raw.questions.length) return null;
+
   const questions = raw.questions.map(q => {
     if (!q || typeof q !== 'object') return null;
     const type = String(q.type || '').toLowerCase();
@@ -410,7 +428,6 @@ function normalizeExam(raw) {
       explain: q.explain || q.explanation || ''
     };
 
-    // ---------- MCQ ----------
     if (type === 'mcq' || type === 'tracnghiem' || type === 'multiple-choice') {
       const options = Array.isArray(q.options) ? q.options.map(String) : [];
       if (options.length < 2) return null;
@@ -424,9 +441,7 @@ function normalizeExam(raw) {
       return { ...base, type: 'mcq', options, answer };
     }
 
-    // ---------- TRUE/FALSE ----------
     if (type === 'truefalse' || type === 'true-false' || type === 'dungsai' || type === 'tf') {
-      // NEW: statements[]
       if (Array.isArray(q.statements) && q.statements.length > 0) {
         const statements = q.statements.map(s => {
           if (!s || typeof s !== 'object') return null;
@@ -441,14 +456,12 @@ function normalizeExam(raw) {
         if (!statements.length) return null;
         return { ...base, type: 'truefalse', statements, allOrNothing: !!q.allOrNothing };
       }
-      // OLD: answer boolean
       let a = q.answer;
       if (typeof a === 'string') a = /^(true|đúng|dung|t|1|yes)$/i.test(a.trim());
       if (typeof a !== 'boolean') return null;
       return { ...base, type: 'truefalse', answer: a };
     }
 
-    // ---------- SHORT ----------
     if (type === 'short' || type === 'traloinngan' || type === 'fill' || type === 'text') {
       let answers = q.answers || q.accepted || (q.answer !== undefined ? [q.answer] : []);
       if (!Array.isArray(answers)) answers = [answers];
@@ -459,11 +472,22 @@ function normalizeExam(raw) {
     return null;
   }).filter(Boolean);
   if (!questions.length) return null;
+
+  // ===== SHUFFLE CONFIG =====
+  let shuffleQ = false, shuffleO = false;
+  if (raw.shuffle === true || raw.shuffle === 'all') { shuffleQ = true; shuffleO = true; }
+  else if (raw.shuffle === 'questions') { shuffleQ = true; }
+  else if (raw.shuffle === 'options') { shuffleO = true; }
+  if (raw.shuffleQuestions) shuffleQ = true;
+  if (raw.shuffleOptions) shuffleO = true;
+
   return {
     id: raw.id || null,
     title: String(raw.title || raw.name || 'Đề không tên').trim(),
     subject: raw.subject ? String(raw.subject).trim() : '',
     duration: Number(raw.duration) > 0 ? Number(raw.duration) : 0,
+    shuffleQuestions: shuffleQ,
+    shuffleOptions: shuffleO,
     questions
   };
 }
@@ -480,10 +504,27 @@ function showScreen(id) {
 function startExam(examId) {
   const exam = exams.find(e => e.id === examId);
   if (!exam) return;
+
+  // Thứ tự hiển thị câu hỏi (map vị trí hiển thị → chỉ số gốc)
+  const questionOrder = exam.questions.map((_, i) => i);
+  if (exam.shuffleQuestions) shuffleArray(questionOrder);
+
+  // Thứ tự hiển thị đáp án MCQ cho từng câu (map vị trí hiển thị → chỉ số gốc)
+  const optionOrders = {};
+  exam.questions.forEach((q, i) => {
+    if (q.type === 'mcq') {
+      const arr = q.options.map((_, j) => j);
+      if (exam.shuffleOptions) shuffleArray(arr);
+      optionOrders[i] = arr;
+    }
+  });
+
   session = {
     exam,
     answers: new Array(exam.questions.length).fill(null),
     index: 0,
+    questionOrder,
+    optionOrders,
     startedAt: Date.now(),
     endsAt: 0,
     timerId: null
@@ -527,21 +568,24 @@ function startTimer() {
 
 function renderQuestion() {
   const { exam, index, answers } = session;
-  const q = exam.questions[index];
-  const a = answers[index];
+  const questionOrder = session.questionOrder || exam.questions.map((_, i) => i);
+  const realIdx = questionOrder[index];
+  const q = exam.questions[realIdx];
+  const a = answers[realIdx];
 
   let body = '';
   if (q.type === 'mcq') {
-    body = `<div class="opts">` + q.options.map((opt, i) => {
+    const optOrder = session.optionOrders[realIdx] || q.options.map((_, i) => i);
+    body = `<div class="opts">` + optOrder.map((origIdx, visualPos) => {
+      const opt = q.options[origIdx];
       const clean = String(opt).replace(/^\s*[A-Za-z]\s*[.)\-:]\s*/, '');
-      return `<button class="opt ${a === i ? 'selected' : ''}" data-opt="${i}">
-        <span class="opt-key">${String.fromCharCode(65 + i)}</span>
+      return `<button class="opt ${a === origIdx ? 'selected' : ''}" data-opt="${origIdx}">
+        <span class="opt-key">${String.fromCharCode(65 + visualPos)}</span>
         <span class="opt-text">${richInline(clean)}</span>
       </button>`;
     }).join('') + `</div>`;
   } else if (q.type === 'truefalse') {
     if (Array.isArray(q.statements) && q.statements.length > 0) {
-      // ===== ĐA PHÁT BIỂU =====
       const arr = Array.isArray(a) ? a : new Array(q.statements.length).fill(null);
       body = `<div class="tf-stmts">` + q.statements.map((s, i) => {
         const cur = arr[i];
@@ -557,7 +601,6 @@ function renderQuestion() {
         </div>`;
       }).join('') + `</div>`;
     } else {
-      // ===== FORMAT CŨ =====
       body = `<div class="opts">
         <button class="opt ${a === true ? 'selected' : ''}" data-tf="true">
           <span class="opt-key">✓</span><span class="opt-text">Đúng</span></button>
@@ -586,7 +629,7 @@ function renderQuestion() {
   $('qContainer').querySelectorAll('[data-opt]').forEach(b => {
     b.onclick = () => {
       playClick();
-      session.answers[session.index] = Number(b.dataset.opt);
+      session.answers[realIdx] = Number(b.dataset.opt);
       renderQuestion();
     };
   });
@@ -594,7 +637,7 @@ function renderQuestion() {
   $('qContainer').querySelectorAll('[data-tf]').forEach(b => {
     b.onclick = () => {
       playClick();
-      session.answers[session.index] = b.dataset.tf === 'true';
+      session.answers[realIdx] = b.dataset.tf === 'true';
       renderQuestion();
     };
   });
@@ -604,19 +647,19 @@ function renderQuestion() {
       playClick();
       const sIdx = Number(b.dataset.stmt);
       const sVal = b.dataset.val === '1';
-      let curArr = session.answers[session.index];
+      let curArr = session.answers[realIdx];
       if (!Array.isArray(curArr) || curArr.length !== q.statements.length) {
         curArr = new Array(q.statements.length).fill(null);
       }
       curArr[sIdx] = sVal;
-      session.answers[session.index] = curArr;
+      session.answers[realIdx] = curArr;
       renderQuestion();
     };
   });
 
   const si = $('shortInput');
   if (si) {
-    si.oninput = () => { session.answers[session.index] = si.value; renderPalette(); };
+    si.oninput = () => { session.answers[realIdx] = si.value; renderPalette(); };
     if (si.value) si.setSelectionRange(si.value.length, si.value.length);
   }
 
@@ -628,8 +671,10 @@ function renderQuestion() {
 
 function renderPalette() {
   const { exam, answers, index } = session;
-  $('palette').innerHTML = exam.questions.map((q, i) => {
-    const a = answers[i];
+  const questionOrder = session.questionOrder || exam.questions.map((_, i) => i);
+  $('palette').innerHTML = questionOrder.map((realIdx, displayIdx) => {
+    const q = exam.questions[realIdx];
+    const a = answers[realIdx];
     let done;
     if (q.type === 'truefalse' && Array.isArray(q.statements)) {
       done = Array.isArray(a) && a.length === q.statements.length
@@ -639,8 +684,8 @@ function renderPalette() {
     } else {
       done = a !== null && a !== undefined;
     }
-    const cls = i === index ? 'cur' : (done ? 'done' : '');
-    return `<button class="pal ${cls}" data-go="${i}">${i + 1}</button>`;
+    const cls = displayIdx === index ? 'cur' : (done ? 'done' : '');
+    return `<button class="pal ${cls}" data-go="${displayIdx}">${displayIdx + 1}</button>`;
   }).join('');
   $('palette').querySelectorAll('[data-go]').forEach(b => {
     b.onclick = () => {
@@ -652,7 +697,7 @@ function renderPalette() {
 }
 
 /* =========================================================
-   GRADING — partial credit cho TF đa phát biểu
+   GRADING
    ========================================================= */
 function grade(exam, answers) {
   let correct = 0;
@@ -707,7 +752,11 @@ function submitExam(auto) {
 
   history.push({
     examId: exam.id, title: exam.title, correct: result.correct,
-    total: result.total, timeSpent, at: Date.now(), answers
+    total: result.total, timeSpent, at: Date.now(), answers,
+    shuffle: {
+      questionOrder: session.questionOrder,
+      optionOrders: session.optionOrders
+    }
   });
   if (history.length > 300) history = history.slice(-300);
   store.set(K.history, history);
@@ -720,6 +769,7 @@ function submitExam(auto) {
    RESULT
    ========================================================= */
 function renderResult(exam, result, timeSpent, gained, auto) {
+  const optOrders = (session && session.optionOrders) || {};
   const pct = Math.round(result.correct / Math.max(1, result.total) * 100);
   const C = 2 * Math.PI * 52;
   showScreen('screen-result');
@@ -754,7 +804,7 @@ function renderResult(exam, result, timeSpent, gained, auto) {
     const d = result.details[i];
     const isMultiTF = q.type === 'truefalse' && Array.isArray(q.statements) && q.statements.length > 0;
 
-    // ===== NHÁNH MỚI: ĐA PHÁT BIỂU =====
+    // ===== ĐA PHÁT BIỂU =====
     if (isMultiTF) {
       const userArr = Array.isArray(d.given) ? d.given : [];
       const n = q.statements.length;
@@ -771,7 +821,7 @@ function renderResult(exam, result, timeSpent, gained, auto) {
           <div class="rv-stmt-ans">
             ${isC
               ? `<span class="rv-ok">✓ ${uTxt}</span>`
-              : `<span class="rv-no">✕ Bạn: ${uTxt}</span> <span class="rv-correct">Đúng: <b>${cTxt}</b></span>`}
+              : `<span class="rv-no">✕ Bạn: ${uTxt}</span> <span class="rv-correct">Đáp án: <b>${cTxt}</b></span>`}
           </div>
         </div>`;
       }).join('');
@@ -788,13 +838,17 @@ function renderResult(exam, result, timeSpent, gained, auto) {
         </div>`;
     }
 
-    // ===== NHÁNH CŨ =====
+    // ===== CÂU THƯỜNG =====
     let givenTxt = '—';
     if (q.type === 'mcq') {
-      givenTxt = (d.given === null || d.given === undefined)
-        ? '<i>Chưa trả lời</i>'
-        : String.fromCharCode(65 + d.given) + '. ' +
+      if (d.given === null || d.given === undefined) {
+        givenTxt = '<i>Chưa trả lời</i>';
+      } else {
+        const optOrder = optOrders[i];
+        const visPos = optOrder ? optOrder.indexOf(d.given) : d.given;
+        givenTxt = String.fromCharCode(65 + visPos) + '. ' +
           richInline(String(q.options[d.given]).replace(/^\s*[A-Za-z]\s*[.)\-:]\s*/, ''));
+      }
     } else if (q.type === 'truefalse') {
       givenTxt = d.given === null || d.given === undefined ? '<i>Chưa trả lời</i>' : (d.given ? 'Đúng' : 'Sai');
     } else {
@@ -803,7 +857,9 @@ function renderResult(exam, result, timeSpent, gained, auto) {
 
     let correctTxt = '';
     if (q.type === 'mcq') {
-      correctTxt = String.fromCharCode(65 + q.answer) + '. ' +
+      const optOrder = optOrders[i];
+      const visPos = optOrder ? optOrder.indexOf(q.answer) : q.answer;
+      correctTxt = String.fromCharCode(65 + visPos) + '. ' +
         richInline(String(q.options[q.answer]).replace(/^\s*[A-Za-z]\s*[.)\-:]\s*/, ''));
     } else if (q.type === 'truefalse') {
       correctTxt = q.answer ? 'Đúng' : 'Sai';
@@ -818,7 +874,7 @@ function renderResult(exam, result, timeSpent, gained, auto) {
           <div class="rv-q"><b>Câu ${i + 1}.</b> <span class="rich">${rich(q.question)}</span></div>
         </div>
         <div class="rv-line ${d.ok ? '' : 'bad'}">Bạn trả lời: <span class="ans-given">${givenTxt}</span></div>
-        ${d.ok ? '' : `<div class="rv-line good">Đáp án đúng: <b>${correctTxt}</b></div>`}
+        ${d.ok ? '' : `<div class="rv-line good">Đáp án: <b>${correctTxt}</b></div>`}
         ${q.explain ? `<div class="rv-explain rich">💡 ${rich(q.explain)}</div>` : ''}
       </div>`;
   }).join('');
@@ -871,7 +927,6 @@ function launchGame(name) {
   else if (name === 'reaction') startReaction();
 }
 
-/* -------- MEMORY -------- */
 function startMemory() {
   const emojis = ['🍎','🍊','🍋','🍇','🍓','🍒','🍑','🥝'];
   const deck = [...emojis, ...emojis]
@@ -949,7 +1004,6 @@ function startMemory() {
   gameCleanup = () => clearInterval(timerId);
 }
 
-/* -------- MATH SPRINT -------- */
 function startMathSprint() {
   let score = 0;
   let timeLeft = 60;
@@ -1042,7 +1096,6 @@ function startMathSprint() {
   gameCleanup = () => { if (timerId) clearInterval(timerId); };
 }
 
-/* -------- REACTION -------- */
 function startReaction() {
   let state = 'idle';
   let timeoutId = null;
@@ -1259,7 +1312,7 @@ if (document.readyState === 'loading') {
 }
 
 /* =========================================================
-   PWA — Đăng ký Service Worker
+   PWA — Service Worker
    ========================================================= */
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
