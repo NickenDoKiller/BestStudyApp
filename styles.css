@@ -1978,3 +1978,142 @@ textarea {
     font-size: 12.5px
   }
 }
+
+/* ===== Đa phát biểu (True/False) ===== */
+.tf-stmts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.tf-stmt {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.tf-stmt-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.tf-stmt-label {
+  font-weight: 800;
+  color: var(--accent, #4ea1ff);
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.tf-stmt-text {
+  flex: 1;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.tf-stmt-text p {
+  margin: 0;
+}
+
+.tf-stmt-text p+p {
+  margin-top: 6px;
+}
+
+.tf-stmt-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.tf-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .04);
+  color: var(--text, #fff);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+  font-size: 14px;
+}
+
+.tf-btn:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.tf-btn.ok.on {
+  background: var(--good, #22c55e);
+  color: #fff;
+  border-color: var(--good, #22c55e);
+}
+
+.tf-btn.no.on {
+  background: var(--bad, #ef4444);
+  color: #fff;
+  border-color: var(--bad, #ef4444);
+}
+
+/* ===== Review đa phát biểu ===== */
+.rv-score-line {
+  font-size: 13px;
+  color: var(--muted, #9aa);
+  margin: 6px 0 8px;
+}
+
+.rv-stmts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.rv-stmt {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .03);
+  border-left: 3px solid rgba(255, 255, 255, .15);
+}
+
+.rv-stmt.ok {
+  border-left-color: var(--good, #22c55e);
+}
+
+.rv-stmt.no {
+  border-left-color: var(--bad, #ef4444);
+}
+
+.rv-stmt-label {
+  font-weight: 800;
+  margin-right: 6px;
+  color: var(--accent, #4ea1ff);
+}
+
+.rv-stmt-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rv-stmt-ans {
+  margin-top: 6px;
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rv-ok {
+  color: var(--good, #22c55e);
+  font-weight: 600;
+}
+
+.rv-no {
+  color: var(--bad, #ef4444);
+  font-weight: 600;
+}
+
+.rv-correct {
+  color: var(--text, #fff);
+}

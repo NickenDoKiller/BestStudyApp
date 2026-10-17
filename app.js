@@ -320,7 +320,7 @@ function bindImportEvents() {
 function bindImportActions() {
   $('btnLoadDemo').onclick = () => {
     $('importArea').value = JSON.stringify({
-      title: "Đề mẫu — Markdown + LaTeX",
+      title: "Đề mẫu — Đúng/Sai đa phát biểu",
       subject: "Tổng hợp",
       duration: 5,
       questions: [
@@ -331,9 +331,14 @@ function bindImportActions() {
           explain: "Trong $E_k = \\frac{1}{2}mv^2$: **m** = khối lượng (kg), **v** = vận tốc (m/s)."
         },
         { type: "truefalse",
-          question: "Trong Python, đoạn code sau in ra 10 số:\n```python\nfor i in range(10):\n    print(i)\n```",
-          answer: true,
-          explain: "`range(10)` sinh ra 0..9 → đúng 10 giá trị."
+          question: "Xét các phát biểu sau về **nội năng** và quá trình biến đổi khí:",
+          statements: [
+            { text: "Nén khí nhanh làm nhiệt độ khí tăng là do khí nhận công.", answer: true },
+            { text: "Khi khí dãn nở tự do không thực hiện công thì nội năng luôn tăng.", answer: false },
+            { text: "Nội năng của khí lý tưởng chỉ phụ thuộc vào nhiệt độ.", answer: true },
+            { text: "Đơn vị của nội năng là Joule (J).", answer: true }
+          ],
+          explain: "a) Đúng — nén nhanh sinh công lên khí. b) Sai — dãn nở tự do, nội năng khí lý tưởng không đổi. c) Đúng. d) Đúng."
         },
         { type: "short",
           question: "Nghiệm của phương trình $x^2 - 5x + 6 = 0$ (nhập số lớn hơn)?",
@@ -400,6 +405,19 @@ function normalizeExam(raw) {
       return { ...base, type: 'mcq', options, answer };
     }
     if (type === 'truefalse' || type === 'true-false' || type === 'dungsai' || type === 'tf') {
+      // ===== FORMAT MỚI: statements[] =====
+      if (Array.isArray(q.statements) && q.statements.length > 0) {
+        const statements = q.statements.map(s => {
+          if (!s || typeof s !== 'object') return null;
+          let a = s.answer;
+          if (typeof a === 'string') a = /^(true|đúng|dung|t|1|yes)$/i.test(a.trim());
+          if (typeof a !== 'boolean') return null;
+          return { text: String(s.text || s.statement || s.content || '').trim(), answer: a };
+        }).filter(s => s && s.text);
+        if (!statements.length) return null;
+        return { ...base, type: 'truefalse', statements, allOrNothing: !!q.allOrNothing };
+      }
+      // ===== FORMAT CŨ: answer boolean =====
       let a = q.answer;
       if (typeof a === 'string') a = /^(true|đúng|dung|t|1|yes)$/i.test(a.trim());
       if (typeof a !== 'boolean') return null;
@@ -423,7 +441,6 @@ function normalizeExam(raw) {
     questions
   };
 }
-
 /* =========================================================
    EXAM SESSION
    ========================================================= */
@@ -491,12 +508,31 @@ function renderQuestion() {
       </button>`;
     }).join('') + `</div>`;
   } else if (q.type === 'truefalse') {
-    body = `<div class="opts">
-      <button class="opt ${a === true ? 'selected' : ''}" data-tf="true">
-        <span class="opt-key">✓</span><span class="opt-text">Đúng</span></button>
-      <button class="opt ${a === false ? 'selected' : ''}" data-tf="false">
-        <span class="opt-key">✕</span><span class="opt-text">Sai</span></button>
-    </div>`;
+    if (Array.isArray(q.statements) && q.statements.length > 0) {
+      // ===== ĐA PHÁT BIỂU =====
+      const arr = Array.isArray(a) ? a : new Array(q.statements.length).fill(null);
+      body = `<div class="tf-stmts">` + q.statements.map((s, i) => {
+        const cur = arr[i];
+        return `<div class="tf-stmt">
+          <div class="tf-stmt-head">
+            <span class="tf-stmt-label">${String.fromCharCode(97 + i)})</span>
+            <div class="tf-stmt-text rich">${rich(s.text)}</div>
+          </div>
+          <div class="tf-stmt-btns">
+            <button class="tf-btn ok ${cur === true ? 'on' : ''}" data-stmt="${i}" data-val="1">Đúng</button>
+            <button class="tf-btn no ${cur === false ? 'on' : ''}" data-stmt="${i}" data-val="0">Sai</button>
+          </div>
+        </div>`;
+      }).join('') + `</div>`;
+    } else {
+      // ===== FORMAT CŨ =====
+      body = `<div class="opts">
+        <button class="opt ${a === true ? 'selected' : ''}" data-tf="true">
+          <span class="opt-key">✓</span><span class="opt-text">Đúng</span></button>
+        <button class="opt ${a === false ? 'selected' : ''}" data-tf="false">
+          <span class="opt-key">✕</span><span class="opt-text">Sai</span></button>
+      </div>`;
+    }
   } else {
     body = `<input class="short-input" id="shortInput" type="text"
       placeholder="Nhập câu trả lời của bạn..." value="${esc(a || '')}" autocomplete="off" />`;
@@ -516,19 +552,29 @@ function renderQuestion() {
   applyMath($('qContainer'));
 
   $('qContainer').querySelectorAll('[data-opt]').forEach(b => {
-    b.onclick = () => {
-      playClick();
-      session.answers[session.index] = Number(b.dataset.opt);
-      renderQuestion();
-    };
+    b.onclick = () => { playClick(); session.answers[session.index] = Number(b.dataset.opt); renderQuestion(); };
   });
+
+  // Cũ: 1 nút true/false
   $('qContainer').querySelectorAll('[data-tf]').forEach(b => {
+    b.onclick = () => { playClick(); session.answers[session.index] = b.dataset.tf === 'true'; renderQuestion(); };
+  });
+
+  // Mới: nút theo từng ý
+  $('qContainer').querySelectorAll('[data-stmt]').forEach(b => {
     b.onclick = () => {
       playClick();
-      session.answers[session.index] = b.dataset.tf === 'true';
+      const sIdx = Number(b.dataset.stmt);
+      const sVal = b.dataset.val === '1';
+      const curArr = session.answers[session.index];
+      if (!Array.isArray(curArr) || curArr.length !== q.statements.length) {
+        session.answers[session.index] = new Array(q.statements.length).fill(null);
+      }
+      session.answers[session.index][sIdx] = sVal;
       renderQuestion();
     };
   });
+
   const si = $('shortInput');
   if (si) {
     si.oninput = () => { session.answers[session.index] = si.value; renderPalette(); };
@@ -540,24 +586,25 @@ function renderQuestion() {
   $('progBar').style.width = ((index + 1) / exam.questions.length * 100) + '%';
   renderPalette();
 }
-
 function renderPalette() {
   const { exam, answers, index } = session;
   $('palette').innerHTML = exam.questions.map((q, i) => {
     const a = answers[i];
-    const done = a !== null && a !== '' && a !== undefined;
+    let done;
+    if (q.type === 'truefalse' && Array.isArray(q.statements)) {
+      done = Array.isArray(a) && a.length === q.statements.length && a.every(x => x === true || x === false);
+    } else if (q.type === 'short') {
+      done = String(a || '').trim() !== '';
+    } else {
+      done = a !== null && a !== undefined;
+    }
     const cls = i === index ? 'cur' : (done ? 'done' : '');
     return `<button class="pal ${cls}" data-go="${i}">${i + 1}</button>`;
   }).join('');
   $('palette').querySelectorAll('[data-go]').forEach(b => {
-    b.onclick = () => {
-      playClick();
-      session.index = Number(b.dataset.go);
-      renderQuestion();
-    };
+    b.onclick = () => { playClick(); session.index = Number(b.dataset.go); renderQuestion(); };
   });
 }
-
 /* =========================================================
    GRADING
    ========================================================= */
@@ -566,20 +613,37 @@ function grade(exam, answers) {
   const details = exam.questions.map((q, i) => {
     const given = answers[i];
     let ok = false;
-    if (q.type === 'mcq') ok = given === q.answer;
-    else if (q.type === 'truefalse') ok = given === q.answer;
-    else if (q.type === 'short') {
+    if (q.type === 'mcq') {
+      ok = given === q.answer;
+      if (ok) correct++;
+    } else if (q.type === 'truefalse') {
+      if (Array.isArray(q.statements) && q.statements.length > 0) {
+        const n = q.statements.length;
+        if (Array.isArray(given) && given.length === n) {
+          const matched = q.statements.filter((s, j) => given[j] === s.answer).length;
+          if (q.allOrNothing) {
+            ok = matched === n;
+            if (ok) correct++;
+          } else {
+            ok = matched === n;             // icon ✓ chỉ khi đúng hết
+            correct += matched / n;         // điểm từng phần
+          }
+        }
+      } else {
+        ok = given === q.answer;
+        if (ok) correct++;
+      }
+    } else if (q.type === 'short') {
       const g = String(given ?? '').trim();
       if (!g) ok = false;
       else if (q.strict) ok = q.answers.some(a => a === g);
       else { const ng = normShort(g); ok = ng !== '' && q.answers.some(a => normShort(a) === ng); }
+      if (ok) correct++;
     }
-    if (ok) correct++;
     return { ok, given };
   });
   return { correct, total: exam.questions.length, details };
 }
-
 function submitExam(auto) {
   if (!session) return;
   clearInterval(session.timerId);
@@ -614,10 +678,15 @@ function renderResult(exam, result, timeSpent, gained, auto) {
   arc.style.strokeDashoffset = C;
   requestAnimationFrame(() => setTimeout(() => { arc.style.strokeDashoffset = C * (1 - pct / 100); }, 60));
 
+  const corrDisp = Number.isInteger(result.correct)
+    ? result.correct
+    : (Math.round(result.correct * 100) / 100);
+  const wrongDisp = Math.round((result.total - result.correct) * 100) / 100;
+
   $('scorePct').textContent = pct + '%';
-  $('scoreFrac').textContent = `${result.correct}/${result.total}`;
-  $('rsCorrect').textContent = result.correct;
-  $('rsWrong').textContent = result.total - result.correct;
+  $('scoreFrac').textContent = `${corrDisp}/${result.total}`;
+  $('rsCorrect').textContent = corrDisp;
+  $('rsWrong').textContent = wrongDisp;
   $('rsTime').textContent = fmtTime(timeSpent);
   $('rsStreak').textContent = streak.count || 0;
 
@@ -632,8 +701,44 @@ function renderResult(exam, result, timeSpent, gained, auto) {
 
   $('reviewList').innerHTML = exam.questions.map((q, i) => {
     const d = result.details[i];
-    let givenTxt = '—';
+    const isMultiTF = q.type === 'truefalse' && Array.isArray(q.statements) && q.statements.length > 0;
 
+    // ===== NHÁNH MỚI: ĐA PHÁT BIỂU =====
+    if (isMultiTF) {
+      const userArr = Array.isArray(d.given) ? d.given : [];
+      const n = q.statements.length;
+      const matched = q.statements.filter((s, j) => userArr[j] === s.answer).length;
+
+      const rows = q.statements.map((s, j) => {
+        const ua = userArr[j];
+        const isC = ua === s.answer;
+        const uTxt = ua === true ? 'Đúng' : ua === false ? 'Sai' : '—';
+        const cTxt = s.answer ? 'Đúng' : 'Sai';
+        return `<div class="rv-stmt ${isC ? 'ok' : 'no'}">
+          <span class="rv-stmt-label">${String.fromCharCode(97 + j)})</span>
+          <span class="rv-stmt-text">${richInline(s.text)}</span>
+          <div class="rv-stmt-ans">
+            ${isC
+              ? `<span class="rv-ok">✓ ${uTxt}</span>`
+              : `<span class="rv-no">✕ Bạn: ${uTxt}</span> <span class="rv-correct">Đúng: <b>${cTxt}</b></span>`}
+          </div>
+        </div>`;
+      }).join('');
+
+      return `
+        <div class="review-item ${d.ok ? 'ok' : 'no'}">
+          <div class="rv-head">
+            <span class="rv-icon ${d.ok ? 'ok' : 'no'}">${d.ok ? '✓' : '✕'}</span>
+            <div class="rv-q"><b>Câu ${i + 1}.</b> <span class="rich">${rich(q.question)}</span></div>
+          </div>
+          <div class="rv-score-line">Đúng <b>${matched}/${n}</b> ý${q.allOrNothing ? ' (tất cả hoặc không)' : ''}</div>
+          <div class="rv-stmts">${rows}</div>
+          ${q.explain ? `<div class="rv-explain rich">💡 ${rich(q.explain)}</div>` : ''}
+        </div>`;
+    }
+
+    // ===== NHÁNH CŨ: giữ nguyên logic cũ =====
+    let givenTxt = '—';
     if (q.type === 'mcq') {
       givenTxt = (d.given === null || d.given === undefined)
         ? '<i>Chưa trả lời</i>'
@@ -675,7 +780,6 @@ function renderResult(exam, result, timeSpent, gained, auto) {
   $('btnRedo').style.display = exams.some(e => e.id === examSnapshot.id) ? '' : 'none';
   if (gained) setTimeout(() => toast(`🔥 Chuỗi tăng lên ${streak.count} ngày!`, 'ok'), 700);
 }
-
 /* =========================================================
    MINI GAMES
    ========================================================= */
@@ -1014,10 +1118,13 @@ function bindMainEvents() {
     const total = session.exam.questions.length;
     const unanswered = session.answers.filter((a, i) => {
       const q = session.exam.questions[i];
+      if (q.type === 'truefalse' && Array.isArray(q.statements)) {
+        return !Array.isArray(a) || a.length !== q.statements.length
+               || a.some(x => x === null || x === undefined);
+      }
       return a === null || a === undefined ||
              (q.type === 'short' && String(a).trim() === '');
     }).length;
-    const done = total - unanswered;
 
     if (unanswered > 0) {
       showConfirm({
