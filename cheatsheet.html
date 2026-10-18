@@ -7,6 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- THÊM MARKED + KATEX ĐỂ RENDER MARKDOWN/LATEX -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -117,6 +124,7 @@
   .btn:hover{background:rgba(255,255,255,.09);border-color:var(--border-hover);transform:translateY(-1px)}
   .btn:active{transform:translateY(0)}
   .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  
   .btn-primary{
     background:linear-gradient(135deg,#7c5cff,#6366f1);
     border-color:transparent;color:#fff;
@@ -136,6 +144,19 @@
     border-color:rgba(34,211,238,.55);
     box-shadow:0 4px 20px rgba(34,211,238,.25);
   }
+  
+  /* CSS NÚT XOÁ MỚI */
+  .btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+  }
+
   .btn-icon{padding:9px;width:37px;justify-content:center}
 
   /* ---------- MAIN ---------- */
@@ -220,10 +241,19 @@
     line-height:1.45;
     word-break:break-word;
   }
+  .term p { margin: 0; }
+  
   .desc{
     margin-top:8px;font-size:13.5px;line-height:1.65;
     color:#a8a8bd;word-break:break-word;
   }
+  .desc p { margin-bottom: 8px; }
+  .desc p:last-child { margin-bottom: 0; }
+  .desc code {
+    background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #e2e2e2;
+  }
+  .desc ul, .desc ol { margin-left: 20px; margin-bottom: 8px; }
 
   .code-wrap{position:relative;margin-top:12px}
   .code{
@@ -370,6 +400,7 @@
     .hero h1{font-size:26px}
     .modal-head .hint{display:none}
     .modal{height:94vh;max-height:94vh}
+    .btn-danger span { display: none; } /* Ẩn chữ trên mobile cho gọn */
   }
 </style>
 </head>
@@ -393,6 +424,13 @@
     <button class="btn btn-icon" id="btnDownload" title="Tải JSON về máy">
       <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
     </button>
+    
+    <!-- NÚT XOÁ CHEATSHEET -->
+    <button class="btn btn-danger" id="btnClear" title="Xoá toàn bộ dữ liệu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      <span>Xoá hết</span>
+    </button>
+
     <button class="btn btn-primary" id="btnOpen">
       <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>
       Nạp JSON
@@ -426,7 +464,7 @@
       </button>
       <span class="spacer"></span>
       <button class="btn" id="btnCancel">Huỷ</button>
-      <button class="btn btn-merge" id="btnMerge" title="Cộng dồn vào dữ liệu hiện tại (không mất dữ liệu cũ)">
+      <button class="btn btn-merge" id="btnMerge" title="Cộng dồn vào dữ liệu hiện tại">
         <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         Thêm vào
       </button>
@@ -446,57 +484,24 @@
    ============================================================ */
 const SAMPLE = {
   title: "Cheatsheet của tôi",
-  subtitle: "Ghi nhớ mọi thứ — chỉ cần dán JSON, mọi thứ tự lên hình. Nhấn ⌘/Ctrl + E để mở editor.",
+  subtitle: "Ghi nhớ mọi thứ — Hỗ trợ Markdown và LaTeX.",
   sections: [
     {
-      title: "JavaScript",
-      icon: "⚡",
-      color: "#f7df1e",
+      title: "Vật lý",
+      icon: "⚛️",
+      color: "#22d3ee",
       items: [
-        { term: "Optional Chaining", desc: "Truy cập thuộc tính an toàn, trả về undefined nếu gặp null/undefined thay vì throw lỗi.", code: "const city = user?.address?.city;", tags: ["ES2020"] },
-        { term: "Nullish Coalescing", desc: "Lấy giá trị mặc định CHỈ khi bên trái là null hoặc undefined (khác với || ).", code: "const name = input ?? 'Ẩn danh';", tags: ["ES2020"] },
-        { term: "Destructuring + Rest", desc: "Bóc tách mảng/object ra biến riêng, phần còn lại gom vào rest.", code: "const [a, b, ...rest] = [1, 2, 3, 4];\nconst { name, ...others } = user;", tags: ["ES6"] },
-        { term: "Array methods hay dùng", desc: "Bộ tứ kinh điển khi làm việc với mảng.", code: "arr.map(x => x * 2)\narr.filter(x => x > 0)\narr.reduce((s, x) => s + x, 0)\narr.find(x => x.id === 3)", tags: ["Array"] }
-      ]
-    },
-    {
-      title: "CSS",
-      icon: "🎨",
-      color: "#38bdf8",
-      items: [
-        { term: "Flexbox căn giữa", desc: "Cách nhanh nhất để căn giữa mọi thứ theo cả 2 trục.", code: ".parent {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}", tags: ["Layout"] },
-        { term: "Grid tự động responsive", desc: "Không cần media query, cột tự co giãn theo bề rộng.", code: "grid-template-columns:\n  repeat(auto-fill, minmax(300px, 1fr));", tags: ["Grid"] },
-        { term: "Clamp cho typography", desc: "Font size co giãn mượt giữa min và max, không cần media query.", code: "font-size: clamp(1rem, 2.5vw, 2rem);", tags: ["Responsive"] },
-        { term: "Color Mix", desc: "Pha trộn 2 màu trực tiếp trong CSS, cực tiện cho theme.", code: "color: color-mix(in srgb, #7c5cff 70%, white);", tags: ["Modern"] }
-      ]
-    },
-    {
-      title: "Git",
-      icon: "🌿",
-      color: "#f97316",
-      items: [
-        { term: "Undo commit cuối (giữ code)", desc: "Bỏ commit gần nhất nhưng giữ nguyên thay đổi trong working tree.", code: "git reset --soft HEAD~1", tags: ["Reset"] },
-        { term: "Sửa message commit cuối", desc: "Đổi nội dung message của commit vừa tạo.", code: "git commit --amend -m \"message mới\"", tags: ["Amend"] },
-        { term: "Xoá file khỏi git nhưng giữ trên máy", desc: "Bỏ theo dõi file, thêm vào .gitignore.", code: "git rm --cached path/to/file", tags: ["Ignore"] },
-        { term: "Stash nhanh", desc: "Cất tạm thay đổi để chuyển branch, xong lấy lại.", code: "git stash -u\ngit stash pop", tags: ["Stash"] }
-      ]
-    },
-    {
-      title: "Terminal",
-      icon: "⌨️",
-      color: "#4ade80",
-      items: [
-        { term: "Tìm file theo tên", desc: "Tìm nhanh file trong thư mục hiện tại.", code: "find . -name \"*.json\" -type f", tags: ["find"] },
-        { term: "Grep đệ quy có số dòng", desc: "Tìm chuỗi trong toàn bộ source code.", code: "grep -rn \"TODO\" ./src", tags: ["grep"] },
-        { term: "Xem port đang chiếm", desc: "Kiểm tra tiến trình nào đang dùng port.", code: "lsof -i :3000", tags: ["port"] }
+        { 
+          term: "Công thức tính **động năng** là $E_k = \\frac{1}{2}mv^2$. Đại lượng **m** là gì?", 
+          desc: "Trong $E_k = \\frac{1}{2}mv^2$: **m** = khối lượng (kg), **v** = vận tốc (m/s).", 
+          code: "", 
+          tags: ["Vật lý", "Cơ học"] 
+        }
       ]
     }
   ]
 };
 
-/* ============================================================
-   HẰNG SỐ & TRẠNG THÁI
-   ============================================================ */
 const DEFAULT_COLORS = ["#7c5cff", "#22d3ee", "#f472b6", "#4ade80", "#fbbf24", "#f87171", "#a78bfa"];
 const STORAGE_KEY = "cheatsheet.data.v1";
 
@@ -510,6 +515,15 @@ const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
 ));
+
+// Hàm chuyển đổi Markdown sang HTML
+function rich(text) {
+  if (!text) return '';
+  if (typeof marked !== 'undefined') {
+    try { return marked.parse(String(text), { breaks: true, gfm: true }); } catch(e) {}
+  }
+  return esc(text).replace(/\n/g, '<br>');
+}
 
 let toastTimer;
 function toast(msg, isError = false) {
@@ -571,7 +585,7 @@ function saveState() {
 }
 
 /* ============================================================
-   MERGE — cộng dồn dữ liệu thay vì thay thế
+   MERGE — cộng dồn dữ liệu
    ============================================================ */
 function mergeData(existing, incoming) {
   const merged = JSON.parse(JSON.stringify(existing));
@@ -611,8 +625,9 @@ function itemHTML(it, i) {
   const delay = Math.min(i * 26, 380);
   let html = `<article class="card" style="animation-delay:${delay}ms">`;
 
-  if (it.term) html += `<div class="term">${esc(it.term)}</div>`;
-  if (it.desc) html += `<p class="desc">${esc(it.desc)}</p>`;
+  // Sử dụng rich() cho term và desc
+  if (it.term) html += `<div class="term">${rich(it.term)}</div>`;
+  if (it.desc) html += `<div class="desc">${rich(it.desc)}</div>`;
 
   if (it.code) {
     html += `<div class="code-wrap">
@@ -621,7 +636,7 @@ function itemHTML(it, i) {
     </div>`;
   }
 
-  if (it.tags.length) {
+  if (it.tags && it.tags.length) {
     html += `<div class="tags">${it.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
   }
 
@@ -686,12 +701,24 @@ function render() {
   }
 
   app.innerHTML = html;
+
+  // Kích hoạt KaTeX render cho các công thức toán học
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(app, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
+        throwOnError: false
+      });
+    } catch(e) { console.warn("KaTeX error", e); }
+  }
 }
 
 /* ============================================================
    SỰ KIỆN
    ============================================================ */
-// Search
 $("#search").addEventListener("input", (e) => {
   state.query = e.target.value;
   render();
@@ -730,7 +757,24 @@ $("#btnOpen").addEventListener("click", openModal);
 $("#btnCancel").addEventListener("click", closeModal);
 overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
 
-// RENDER — thay thế toàn bộ
+// NÚT XOÁ CHEATSHEET
+$("#btnClear").addEventListener("click", () => {
+  if (state.data.sections.length === 0) {
+    toast("Cheatsheet đang trống rồi!");
+    return;
+  }
+  // Cảnh báo trước khi xoá
+  const isConfirmed = confirm("⚠️ Bạn có chắc chắn muốn xoá TOÀN BỘ cheatsheet?\n\nHành động này sẽ xoá sạch các câu hỏi đã lưu và không thể hoàn tác!");
+  
+  if (isConfirmed) {
+    state.data = { title: "Cheatsheet của tôi", subtitle: "Đã xoá sạch", sections: [] };
+    saveState();
+    render();
+    toast("Đã xoá toàn bộ cheatsheet 🗑️");
+  }
+});
+
+// RENDER
 $("#btnApply").addEventListener("click", () => {
   try {
     const parsed = JSON.parse(editor.value);
@@ -744,7 +788,7 @@ $("#btnApply").addEventListener("click", () => {
   }
 });
 
-// MERGE — cộng dồn vào dữ liệu hiện tại
+// MERGE
 $("#btnMerge").addEventListener("click", () => {
   try {
     const parsed = normalize(JSON.parse(editor.value));
