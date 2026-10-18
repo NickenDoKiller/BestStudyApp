@@ -1,5 +1,5 @@
 /* =========================================================
-   QuizPro — Engine v3.1 (Shuffle + Đáp án label)
+   QuizPro — Engine v3.2 (Edit UI + Shuffle)
    ========================================================= */
 'use strict';
 
@@ -27,6 +27,7 @@ let history = store.get(K.history, []);
 let streak  = store.get(K.streak, { count: 0, best: 0, last: 0 });
 let theme   = store.get(K.theme, 'dark');
 let session = null;
+let editingExam = null;
 let gameCleanup = null;
 
 const $ = id => document.getElementById(id);
@@ -44,6 +45,7 @@ function shuffleArray(arr) {
 
 function toast(msg, type = '') {
   const t = $('toast');
+  if (!t) return;
   t.textContent = msg;
   t.className = 'on ' + type;
   clearTimeout(t._tid);
@@ -181,6 +183,7 @@ const THEMES = [
 ];
 function initThemes() {
   const box = $('themes');
+  if (!box) return;
   box.innerHTML = THEMES.map(t =>
     `<button class="swatch ${t.cls} ${t.id === theme ? 'on' : ''}" data-theme="${t.id}" title="${t.name}"></button>`
   ).join('');
@@ -256,15 +259,19 @@ function renderHome() {
   $('examCount').textContent = exams.length ? `(${exams.length})` : '';
 
   const list = $('examList');
-  if (!exams.length) {
+    if (!exams.length) {
     list.innerHTML = `
       <div class="empty">
         <div class="big">🗂️</div>
         <h3>Chưa có đề nào</h3>
-        <p>Nhờ AI tạo bộ đề theo đúng định dạng JSON, rồi bấm <b>＋ Thêm đề</b> và dán vào.</p>
-        <button class="btn primary" id="emptyAdd">＋ Thêm đề đầu tiên</button>
+        <p>Bạn có thể tạo đề trực tiếp bằng giao diện, hoặc dán JSON do AI tạo.</p>
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;">
+          <button class="btn primary" id="emptyCreate">✨ Tạo bằng giao diện</button>
+          <button class="btn ghost" id="emptyImport">📋 Import JSON</button>
+        </div>
       </div>`;
-    $('emptyAdd').onclick = openImport;
+    $('emptyCreate').onclick = () => { playClick(); createNewExam(); };
+    $('emptyImport').onclick = () => { playClick(); openImport(); };
   } else {
     list.innerHTML = exams.map(ex => {
       const tries = history.filter(h => h.examId === ex.id);
@@ -285,6 +292,7 @@ function renderHome() {
           </div>
           <div class="exam-actions">
             <button class="btn sm primary" data-act="start">Bắt đầu</button>
+            <button class="btn sm" data-act="edit">✏️ Sửa</button>
             <button class="btn sm danger" data-act="del">Xoá</button>
           </div>
         </div>`;
@@ -320,7 +328,15 @@ function openImport() { openModal('modalImport'); $('importArea').focus(); }
 function closeImport() { closeModal('modalImport'); }
 
 function bindImportEvents() {
-  $('btnImportOpen').onclick = openImport;
+  // Nút "Tạo mới" trên thanh header
+  const bNew = $('btnCreateNew');
+  if (bNew) bNew.onclick = () => { playClick(); createNewExam(); };
+  
+  // Nút "Import JSON" trên thanh header
+  const bImport = $('btnImportOpen');
+  if (bImport) bImport.onclick = openImport;
+
+  // Modal
   $('btnImportCancel').onclick = closeImport;
   $('modalImport').addEventListener('click', e => {
     if (e.target.id === 'modalImport') closeImport();
@@ -330,7 +346,7 @@ function bindImportEvents() {
 function bindImportActions() {
   $('btnLoadDemo').onclick = () => {
     $('importArea').value = JSON.stringify({
-      title: "Đề mẫu v3.1 — Shuffle + TF đa phát biểu",
+      title: "Đề mẫu v3.2 — Shuffle + TF đa phát biểu",
       subject: "Tổng hợp",
       duration: 5,
       shuffle: true,
@@ -414,7 +430,7 @@ function bindImportActions() {
 }
 
 /* =========================================================
-   NORMALIZE — hỗ trợ shuffle + TF đa phát biểu
+   NORMALIZE
    ========================================================= */
 function normalizeExam(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -473,7 +489,6 @@ function normalizeExam(raw) {
   }).filter(Boolean);
   if (!questions.length) return null;
 
-  // ===== SHUFFLE CONFIG =====
   let shuffleQ = false, shuffleO = false;
   if (raw.shuffle === true || raw.shuffle === 'all') { shuffleQ = true; shuffleO = true; }
   else if (raw.shuffle === 'questions') { shuffleQ = true; }
@@ -497,7 +512,8 @@ function normalizeExam(raw) {
    ========================================================= */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $(id).classList.add('active');
+  const el = $(id);
+  if (el) el.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -505,11 +521,9 @@ function startExam(examId) {
   const exam = exams.find(e => e.id === examId);
   if (!exam) return;
 
-  // Thứ tự hiển thị câu hỏi (map vị trí hiển thị → chỉ số gốc)
   const questionOrder = exam.questions.map((_, i) => i);
   if (exam.shuffleQuestions) shuffleArray(questionOrder);
 
-  // Thứ tự hiển thị đáp án MCQ cho từng câu (map vị trí hiển thị → chỉ số gốc)
   const optionOrders = {};
   exam.questions.forEach((q, i) => {
     if (q.type === 'mcq') {
@@ -804,7 +818,6 @@ function renderResult(exam, result, timeSpent, gained, auto) {
     const d = result.details[i];
     const isMultiTF = q.type === 'truefalse' && Array.isArray(q.statements) && q.statements.length > 0;
 
-    // ===== ĐA PHÁT BIỂU =====
     if (isMultiTF) {
       const userArr = Array.isArray(d.given) ? d.given : [];
       const n = q.statements.length;
@@ -838,7 +851,6 @@ function renderResult(exam, result, timeSpent, gained, auto) {
         </div>`;
     }
 
-    // ===== CÂU THƯỜNG =====
     let givenTxt = '—';
     if (q.type === 'mcq') {
       if (d.given === null || d.given === undefined) {
@@ -1175,7 +1187,11 @@ function bindMainEvents() {
       startExam(id);
       return;
     }
-
+    if (act.dataset.act === 'edit') {
+      playClick();
+      openEdit(id);
+      return;
+    }
     if (act.dataset.act === 'del') {
       playClick();
       showConfirm({
@@ -1285,7 +1301,394 @@ function bindMainEvents() {
 }
 
 /* =========================================================
-   INIT
+   EDIT EXAM
+   ========================================================= */
+function openEdit(examId) {
+  const ex = exams.find(e => e.id === examId);
+  if (!ex) return;
+
+  if (!$('editTitle') || !$('editQuestions')) {
+    toast('Thiếu HTML màn hình Sửa đề (screen-edit)', 'err');
+    console.error('[QuizPro] Không tìm thấy #editTitle hoặc #editQuestions. Hãy thêm HTML screen-edit vào index.html.');
+    return;
+  }
+
+  editingExam = JSON.parse(JSON.stringify(ex));
+
+  $('editTitle').value = editingExam.title || '';
+  $('editSubject').value = editingExam.subject || '';
+  $('editDuration').value = editingExam.duration || 0;
+  $('editShuffleQ').checked = !!editingExam.shuffleQuestions;
+  $('editShuffleO').checked = !!editingExam.shuffleOptions;
+
+  showScreen('screen-edit');
+  renderEditQuestions();
+}
+function createNewExam() {
+  // 1. Tạo object rỗng
+  editingExam = {
+    id: uid(),
+    title: "Đề thi mới",
+    subject: "",
+    duration: 0,
+    shuffleQuestions: false,
+    shuffleOptions: false,
+    questions: []
+  };
+
+  // 2. Đổ dữ liệu vào form
+  $('editTitle').value = editingExam.title;
+  $('editSubject').value = '';
+  $('editDuration').value = 0;
+  $('editShuffleQ').checked = false;
+  $('editShuffleO').checked = false;
+
+  // 3. Chuyển màn hình
+  showScreen('screen-edit');
+  renderEditQuestions();
+
+  // 4. Tự động thêm 1 câu MCQ cho tiện & focus vào ô Tiêu đề
+  setTimeout(() => {
+    const btnAdd = document.querySelector('.edit-add-bar [data-add="mcq"]');
+    if (btnAdd) btnAdd.click();
+    
+    const titleInput = $('editTitle');
+    if (titleInput) {
+      titleInput.focus();
+      titleInput.select(); // Bôi đen chữ "Đề thi mới" để gõ đè luôn
+    }
+  }, 80);
+}
+
+function renderEditQuestions() {
+  const box = $('editQuestions');
+  if (!editingExam || !editingExam.questions.length) {
+    box.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted)">
+      Chưa có câu hỏi. Bấm nút ＋ bên dưới để thêm câu đầu tiên.
+    </div>`;
+    return;
+  }
+  box.innerHTML = editingExam.questions.map((q, qi) => renderEditQ(q, qi)).join('');
+}
+
+function renderEditQ(q, qi) {
+  const TYPE_LABEL = { mcq: 'Trắc nghiệm', truefalse: 'Đúng / Sai', short: 'Trả lời ngắn' };
+  let body = '';
+
+  if (q.type === 'mcq') {
+    body = `
+      <div class="edit-opts">
+        ${q.options.map((opt, oi) => `
+          <div class="edit-opt">
+            <input type="radio" name="ans_${qi}" ${q.answer === oi ? 'checked' : ''} data-ans="${oi}" title="Đáp án đúng">
+            <input type="text" value="${esc(opt)}" data-opt="${oi}" placeholder="Đáp án ${String.fromCharCode(65 + oi)}">
+            <button class="btn sm danger btn-del" data-del-opt="${oi}" ${q.options.length <= 2 ? 'disabled' : ''}>✕</button>
+          </div>
+        `).join('')}
+        <button class="btn sm" data-add-opt>＋ Thêm đáp án</button>
+      </div>`;
+  } else if (q.type === 'truefalse' && Array.isArray(q.statements)) {
+    body = `
+      <div class="edit-stmts">
+        ${q.statements.map((s, si) => `
+          <div class="edit-stmt">
+            <input type="text" value="${esc(s.text)}" data-stmt="${si}" placeholder="Ý ${String.fromCharCode(97 + si)})">
+            <div class="tf-toggle">
+              <button class="${s.answer === true ? 'on ok' : ''}" data-stmt-ans="${si}" data-val="1">Đ</button>
+              <button class="${s.answer === false ? 'on no' : ''}" data-stmt-ans="${si}" data-val="0">S</button>
+            </div>
+            <button class="btn sm danger btn-del" data-del-stmt="${si}" ${q.statements.length <= 1 ? 'disabled' : ''}>✕</button>
+          </div>
+        `).join('')}
+        <button class="btn sm" data-add-stmt>＋ Thêm ý</button>
+        <label class="check" style="margin-top:6px;font-size:12.5px;display:flex;align-items:center;gap:8px">
+          <input type="checkbox" data-allornothing ${q.allOrNothing ? 'checked' : ''}>
+          Tất cả hoặc không (sai 1 ý = 0 điểm cả câu)
+        </label>
+      </div>`;
+  } else if (q.type === 'truefalse') {
+    body = `
+      <div class="edit-legacy-tf">
+        ⚠️ Câu Đ/S dạng cũ (1 đáp án cho cả câu).
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <button class="btn sm ${q.answer === true ? 'primary' : ''}" data-legacy-ans="1">Đúng</button>
+          <button class="btn sm ${q.answer === false ? 'primary' : ''}" data-legacy-ans="0">Sai</button>
+          <button class="btn sm" data-convert-tf>🔁 Chuyển thành đa phát biểu</button>
+        </div>
+      </div>`;
+  } else if (q.type === 'short') {
+    body = `
+      <div style="margin-top:10px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">
+          Đáp án được chấp nhận (mỗi dòng 1)
+        </label>
+        <textarea class="q-input" data-qtext spellcheck="false" placeholder="Câu hỏi (Markdown + LaTeX)">${esc(q.question)}</textarea>
+        <label class="check" style="margin-top:8px;font-size:12.5px;display:flex;align-items:center;gap:8px">
+          <input type="checkbox" data-strict ${q.strict ? 'checked' : ''}>
+          So khớp chính xác (phân biệt hoa/thường)
+        </label>
+      </div>`;
+  }
+
+  return `
+    <div class="edit-q" data-q="${qi}">
+      <div class="edit-q-head">
+        <span class="eq-num">Câu ${qi + 1}</span>
+        <span class="eq-type">${TYPE_LABEL[q.type] || q.type}</span>
+        <div class="eq-actions">
+          <button class="btn sm" data-move-up="${qi}" ${qi === 0 ? 'disabled' : ''} title="Lên">↑</button>
+          <button class="btn sm" data-move-down="${qi}" ${qi === editingExam.questions.length - 1 ? 'disabled' : ''} title="Xuống">↓</button>
+          <button class="btn sm danger" data-del-q="${qi}">Xoá</button>
+        </div>
+      </div>
+      <textarea class="q-input" data-explain spellcheck="false" placeholder="Giải thích đáp án...">${esc(q.explain || '')}</textarea>
+      ${body}
+      <div class="edit-explain">
+        <label>Giải thích (tuỳ chọn)</label>
+        <textarea class="q-input" data-explain placeholder="Giải thích đáp án...">${esc(q.explain || '')}</textarea>
+      </div>
+    </div>`;
+}
+
+function bindEditEvents() {
+  if (!$('editSave') || !$('editQuestions')) {
+    console.warn('[QuizPro] Không tìm thấy #editSave / #editQuestions — bỏ qua bind sửa đề.');
+    return;
+  }
+
+  $('editCancel').onclick = () => {
+    showConfirm({
+      icon: '⚠️', iconClass: 'warn',
+      title: 'Huỷ chỉnh sửa?',
+      desc: 'Các thay đổi chưa lưu sẽ <b>mất</b>.',
+      cancelText: 'Ở lại',
+      okText: 'Huỷ bỏ',
+      okClass: 'danger-solid',
+      onOk: () => {
+        editingExam = null;
+        showScreen('screen-home');
+        renderHome();
+      }
+    });
+  };
+
+  $('editSave').onclick = saveEdit;
+
+  $('editTitle').oninput    = e => { if (editingExam) editingExam.title = e.target.value; };
+  $('editSubject').oninput  = e => { if (editingExam) editingExam.subject = e.target.value; };
+  $('editDuration').oninput = e => { if (editingExam) editingExam.duration = Math.max(0, Number(e.target.value) || 0); };
+  $('editShuffleQ').onchange = e => { if (editingExam) editingExam.shuffleQuestions = e.target.checked; };
+  $('editShuffleO').onchange = e => { if (editingExam) editingExam.shuffleOptions = e.target.checked; };
+
+  const box = $('editQuestions');
+
+  box.addEventListener('input', e => {
+    const qEl = e.target.closest('[data-q]');
+    if (!qEl || !editingExam) return;
+    const qi = +qEl.dataset.q;
+    const q = editingExam.questions[qi];
+    if (!q) return;
+
+    if (e.target.matches('[data-qtext]'))      q.question = e.target.value;
+    else if (e.target.matches('[data-explain]')) q.explain = e.target.value;
+    else if (e.target.matches('[data-opt]'))   q.options[+e.target.dataset.opt] = e.target.value;
+    else if (e.target.matches('[data-stmt]'))  q.statements[+e.target.dataset.stmt].text = e.target.value;
+    else if (e.target.matches('[data-answers]')) {
+      q.answers = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+  });
+
+  box.addEventListener('change', e => {
+    const qEl = e.target.closest('[data-q]');
+    if (!qEl || !editingExam) return;
+    const qi = +qEl.dataset.q;
+    const q = editingExam.questions[qi];
+    if (!q) return;
+
+    if (e.target.matches('[data-ans]'))            q.answer = +e.target.dataset.ans;
+    else if (e.target.matches('[data-strict]'))    q.strict = e.target.checked;
+    else if (e.target.matches('[data-allornothing]')) q.allOrNothing = e.target.checked;
+  });
+
+  box.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || !editingExam) return;
+    const qEl = btn.closest('[data-q]');
+    const qi = qEl ? +qEl.dataset.q : -1;
+    const q = qi >= 0 ? editingExam.questions[qi] : null;
+
+    if (btn.matches('[data-del-q]')) {
+      showConfirm({
+        icon: '🗑️', iconClass: 'warn',
+        title: `Xoá câu ${qi + 1}?`,
+        desc: 'Không thể hoàn tác.',
+        okText: 'Xoá', okClass: 'danger-solid',
+        onOk: () => { editingExam.questions.splice(qi, 1); renderEditQuestions(); }
+      });
+      return;
+    }
+    if (btn.matches('[data-move-up]') && qi > 0) {
+      [editingExam.questions[qi - 1], editingExam.questions[qi]] = [editingExam.questions[qi], editingExam.questions[qi - 1]];
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-move-down]') && qi < editingExam.questions.length - 1) {
+      [editingExam.questions[qi], editingExam.questions[qi + 1]] = [editingExam.questions[qi + 1], editingExam.questions[qi]];
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-add-opt]') && q) {
+      q.options.push('');
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-del-opt]') && q) {
+      if (btn.disabled || q.options.length <= 2) return;
+      const oi = +btn.dataset.delOpt;
+      q.options.splice(oi, 1);
+      if (q.answer === oi) q.answer = 0;
+      else if (q.answer > oi) q.answer--;
+      if (q.answer >= q.options.length) q.answer = q.options.length - 1;
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-add-stmt]') && q) {
+      q.statements.push({ text: '', answer: true });
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-del-stmt]') && q) {
+      if (btn.disabled || q.statements.length <= 1) return;
+      q.statements.splice(+btn.dataset.delStmt, 1);
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-stmt-ans]') && q) {
+      q.statements[+btn.dataset.stmtAns].answer = btn.dataset.val === '1';
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-legacy-ans]') && q) {
+      q.answer = btn.dataset.legacyAns === '1';
+      renderEditQuestions();
+      return;
+    }
+    if (btn.matches('[data-convert-tf]') && q) {
+      editingExam.questions[qi] = {
+        type: 'truefalse',
+        question: q.question,
+        explain: q.explain || '',
+        allOrNothing: false,
+        statements: [
+          { text: q.question, answer: q.answer === true }
+        ]
+      };
+      renderEditQuestions();
+      toast('Đã chuyển — nhớ sửa lại các ý', 'ok');
+      return;
+    }
+  });
+
+  document.querySelectorAll('.edit-add-bar [data-add]').forEach(b => {
+    b.onclick = () => {
+      if (!editingExam) return;
+      playClick();
+      const type = b.dataset.add;
+      if (type === 'mcq') {
+        editingExam.questions.push({
+          type: 'mcq', question: '', explain: '',
+          options: ['', '', '', ''], answer: 0
+        });
+      } else if (type === 'truefalse') {
+        editingExam.questions.push({
+          type: 'truefalse', question: '', explain: '', allOrNothing: false,
+          statements: [{ text: '', answer: true }, { text: '', answer: false }]
+        });
+      } else if (type === 'short') {
+        editingExam.questions.push({
+          type: 'short', question: '', explain: '', strict: false,
+          answers: ['']
+        });
+      }
+      renderEditQuestions();
+      setTimeout(() => {
+        const last = $('editQuestions').lastElementChild;
+        if (last) last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const ta = last?.querySelector('[data-qtext]');
+        if (ta) ta.focus();
+      }, 60);
+    };
+  });
+}
+
+function saveEdit() {
+  if (!editingExam) return;
+
+  if (!String(editingExam.title || '').trim()) {
+    toast('Chưa nhập tiêu đề', 'err'); return;
+  }
+  if (!editingExam.questions.length) {
+    toast('Cần ít nhất 1 câu hỏi', 'err'); return;
+  }
+
+  const cleanQs = [];
+  for (let i = 0; i < editingExam.questions.length; i++) {
+    const q = editingExam.questions[i];
+    const qText = String(q.question || '').trim();
+    if (!qText) { toast(`Câu ${i + 1}: chưa nhập câu hỏi`, 'err'); return; }
+
+    if (q.type === 'mcq') {
+      const opts = q.options.map(s => String(s).trim());
+      if (opts.length < 2) { toast(`Câu ${i + 1}: cần ≥ 2 đáp án`, 'err'); return; }
+      if (opts.some(o => !o)) { toast(`Câu ${i + 1}: có đáp án trống`, 'err'); return; }
+      if (q.answer < 0 || q.answer >= opts.length) {
+        toast(`Câu ${i + 1}: chưa chọn đáp án đúng`, 'err'); return;
+      }
+      cleanQs.push({
+        type: 'mcq', question: qText, options: opts,
+        answer: q.answer, explain: q.explain || ''
+      });
+    } else if (q.type === 'truefalse' && Array.isArray(q.statements)) {
+      const stmts = q.statements
+        .map(s => ({ text: String(s.text || '').trim(), answer: !!s.answer }))
+        .filter(s => s.text);
+      if (!stmts.length) { toast(`Câu ${i + 1}: cần ít nhất 1 ý có nội dung`, 'err'); return; }
+      cleanQs.push({
+        type: 'truefalse', question: qText, statements: stmts,
+        allOrNothing: !!q.allOrNothing, explain: q.explain || ''
+      });
+    } else if (q.type === 'truefalse') {
+      cleanQs.push({
+        type: 'truefalse', question: qText,
+        answer: !!q.answer, explain: q.explain || ''
+      });
+    } else if (q.type === 'short') {
+      const answers = (q.answers || []).map(s => String(s).trim()).filter(Boolean);
+      if (!answers.length) { toast(`Câu ${i + 1}: cần ít nhất 1 đáp án`, 'err'); return; }
+      cleanQs.push({
+        type: 'short', question: qText, answers,
+        strict: !!q.strict, explain: q.explain || ''
+      });
+    }
+  }
+
+  editingExam.questions = cleanQs;
+  editingExam.title = editingExam.title.trim();
+  editingExam.subject = (editingExam.subject || '').trim();
+
+  const idx = exams.findIndex(e => e.id === editingExam.id);
+  if (idx >= 0) exams[idx] = editingExam;
+  else exams.push(editingExam);
+
+  store.set(K.exams, exams);
+  toast('Đã lưu đề ✓', 'ok');
+  editingExam = null;
+  showScreen('screen-home');
+  renderHome();
+}
+
+/* =========================================================
+   INIT — ⚠️ ĐÃ THÊM bindEditEvents()
    ========================================================= */
 function init() {
   applyTheme();
@@ -1294,6 +1697,7 @@ function init() {
   bindMainEvents();
   bindImportEvents();
   bindImportActions();
+  bindEditEvents();          // ← DÒNG BỊ THIẾU — thêm vào đây!
 
   registerServiceWorker();
 
