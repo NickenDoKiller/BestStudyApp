@@ -127,17 +127,28 @@
           <div class="sec-title">📚 Đề thi <span id="examCount"></span></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn sm ghost" id="btnExport">⬇ Xuất dữ liệu</button>
-            <button class="btn sm primary" id="btnImportOpen">＋ Thêm đề</button>
-          </div>
+            <button class="btn ghost" id="btnImportOpen">📋 Import JSON</button>
+            <button class="btn primary" id="btnCreateNew">✨ Tạo mới</button>
+          </div>  
         </div>
 
         <div class="exam-list" id="examList"></div>
+        
 
-        <div class="sec-head" style="margin-top:30px">
+                <div class="sec-head" style="margin-top:30px">
           <div class="sec-title">🕘 Lịch sử gần đây</div>
+          <button class="btn sm danger" id="btnResetHistory" style="background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.3);">🗑️ Xoá lịch sử</button>
         </div>
         <div class="exam-list" id="historyList"></div>
-      </div>
+
+        <!-- DANGER ZONE -->
+        <div class="danger-zone" style="margin-top:50px; padding:20px; border:1px dashed rgba(239,68,68,0.4); border-radius:16px; background:rgba(239,68,68,0.03); margin-bottom:40px;">
+          <div style="font-weight:800;color:var(--bad);margin-bottom:8px;font-size:15px;">☢️ Vùng Nguy Hiểm</div>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Các hành động dưới đây sẽ xoá dữ liệu vĩnh viễn. Hãy cân nhắc kỹ hoặc bấm <b>Xuất dữ liệu</b> để sao lưu trước khi thực hiện.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="btnResetAll" style="background:rgba(239,68,68,0.15);color:var(--bad);border:1px solid rgba(239,68,68,0.4);">☢️ Xoá toàn bộ dữ liệu</button>
+          </div>
+        </div>
     </section>
 
     <!-- ============ EXAM ============ -->
@@ -160,6 +171,39 @@
         </div>
       </div>
     </section>
+
+    <!-- ============= SCREEN: SỬA ĐỀ ============= -->
+<div class="screen" id="screen-edit">
+  <header class="topbar">
+    <button class="btn ghost" id="editCancel">← Huỷ</button>
+    <div class="brand" style="font-size:16px">✏️ Sửa đề</div>
+    <button class="btn primary" id="editSave">💾 Lưu</button>
+  </header>
+
+  <main class="wrap">
+    <div class="edit-meta">
+      <label class="full">Tiêu đề
+        <input id="editTitle" class="input" type="text" placeholder="Tên đề...">
+      </label>
+      <label>Môn / chủ đề
+        <input id="editSubject" class="input" type="text" placeholder="VD: Vật lý">
+      </label>
+      <label>Thời gian (phút, 0 = không giới hạn)
+        <input id="editDuration" class="input" type="number" min="0" step="1" value="0">
+      </label>
+      <label class="check"><input id="editShuffleQ" type="checkbox"> 🔀 Xáo câu hỏi</label>
+      <label class="check"><input id="editShuffleO" type="checkbox"> 🔀 Xáo đáp án MCQ</label>
+    </div>
+
+    <div id="editQuestions"></div>
+
+    <div class="edit-add-bar">
+      <button class="btn" data-add="mcq">＋ Trắc nghiệm</button>
+      <button class="btn" data-add="truefalse">＋ Đúng / Sai</button>
+      <button class="btn" data-add="short">＋ Trả lời ngắn</button>
+    </div>
+  </main>
+</div>
 
     <!-- ============ RESULT ============ -->
     <section id="screen-result" class="screen">
@@ -207,6 +251,9 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
           <button class="btn primary" id="btnRedo">🔄 Làm lại</button>
           <button class="btn" id="btnHome">🏠 Về trang chủ</button>
+          <button class="btn" id="btnOpenCheatsheet" style="background:rgba(78,161,255,.15);color:#4ea1ff;border:1px solid rgba(78,161,255,.3);">
+    📘 Mở Cheatsheet
+  </button>
         </div>
 
         <div class="sec-head">
