@@ -1355,6 +1355,14 @@ function bindMainEvents() {
   });
 
   $('btnGames').onclick = () => { playClick(); openGames(); };
+    // Nút mở Cheatsheet ở trang chủ
+  const btnHomeCheat = $('btnHomeCheatsheet');
+  if (btnHomeCheat) {
+    btnHomeCheat.onclick = () => {
+      playClick();
+      window.open('cheatsheet.html', '_blank');
+    };
+  }
   $('btnBackHome').onclick = () => {
     playClick();
     if (gameCleanup) { try { gameCleanup(); } catch(e){} gameCleanup = null; }
