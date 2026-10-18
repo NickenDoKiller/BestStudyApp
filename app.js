@@ -1299,6 +1299,77 @@ function bindMainEvents() {
     if (session) { e.preventDefault(); e.returnValue = ''; }
   });
 }
+/* =========================================================
+   DANGER ZONE — Xoá lịch sử / Xoá toàn bộ
+   ========================================================= */
+function threeStepConfirm(title, steps, onFinal) {
+  function step(i) {
+    if (i >= steps.length) { onFinal(); return; }
+    const s = steps[i];
+    showConfirm({
+      icon: i === 0 ? '⚠️' : i === 1 ? '🚨' : '💀',
+      iconClass: 'warn',
+      title: `Cảnh báo ${i + 1}/3: ${title}`,
+      desc: s.desc,
+      cancelText: i === 0 ? 'Huỷ' : 'Dừng lại',
+      okText: s.okText,
+      okClass: 'danger-solid',
+      onOk: () => step(i + 1)
+    });
+  }
+  step(0);
+}
+
+function bindDangerZone() {
+  // 1. Xoá lịch sử làm bài
+  const bHist = $('btnResetHistory');
+  if (bHist) bHist.onclick = () => {
+    playClick();
+    if (!history.length) { toast('Lịch sử đang trống', ''); return; }
+    
+    threeStepConfirm('Xoá Lịch sử làm bài', [
+      { desc: 'Bạn sắp xoá <b>toàn bộ lịch sử làm bài</b>. Điểm trung bình và số câu đã luyện sẽ reset về 0. Bạn chắc chứ?', okText: 'Tiếp tục' },
+      { desc: 'Dữ liệu lịch sử <b>không thể khôi phục</b>. Nếu chưa xuất file sao lưu, hãy dừng lại và làm việc đó trước.', okText: 'Tôi vẫn muốn xoá' },
+      { desc: 'Đây là cảnh báo cuối cùng. Bấm <b>Xoá vĩnh viễn</b> để xác nhận xoá sạch lịch sử.', okText: 'Xoá vĩnh viễn' }
+    ], () => {
+      history = [];
+      store.set(K.history, history);
+      renderHome();
+      toast('Đã xoá toàn bộ lịch sử', 'ok');
+    });
+  };
+
+  // 2. Xoá toàn bộ dữ liệu (Reset App)
+  const bAll = $('btnResetAll');
+  if (bAll) bAll.onclick = () => {
+    playClick();
+    threeStepConfirm('Xoá TOÀN BỘ Dữ liệu', [
+      { desc: 'Bạn sắp xoá <b>tất cả mọi thứ</b>: đề thi, lịch sử, chuỗi streak, chủ đề. Ứng dụng sẽ về trạng thái như mới cài. Bạn chắc chứ?', okText: 'Tiếp tục' },
+      { desc: 'Hành động này <b>không thể khôi phục</b>. Hãy chắc chắn bạn đã bấm <b>Xuất dữ liệu</b> để sao lưu nếu cần.', okText: 'Tôi hiểu rõ hậu quả' },
+      { desc: 'CẢNH BÁO CUỐI CÙNG: Toàn bộ dữ liệu sẽ bị xoá sạch khỏi trình duyệt. Bấm <b>Xoá vĩnh viễn</b> để đồng ý.', okText: 'Xoá vĩnh viễn' }
+    ], () => {
+      // Reset sạch các biến trong RAM
+      exams = [];
+      history = [];
+      streak = { count: 0, best: 0, last: 0 };
+      theme = 'dark';
+      
+      // Ghi đè null vào localStorage
+      store.set(K.exams, exams);
+      store.set(K.history, history);
+      store.set(K.streak, streak);
+      store.set(K.theme, theme);
+      
+      // Reset UI
+      applyTheme();
+      const box = $('themes');
+      if (box) box.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s.dataset.theme === theme));
+      
+      renderHome();
+      toast('Đã xoá toàn bộ dữ liệu. Ứng dụng đã reset.', 'ok');
+    });
+  };
+}
 
 /* =========================================================
    EDIT EXAM
@@ -1697,7 +1768,8 @@ function init() {
   bindMainEvents();
   bindImportEvents();
   bindImportActions();
-  bindEditEvents();          // ← DÒNG BỊ THIẾU — thêm vào đây!
+  bindEditEvents();
+  bindDangerZone();  
 
   registerServiceWorker();
 
