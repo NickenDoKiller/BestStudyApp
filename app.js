@@ -1,5 +1,5 @@
 /* =========================================================
-   QuizPro — Engine v3.2 (Edit UI + Shuffle)
+   QuizPro — Engine v3.2 (Edit UI + Shuffle + Cheatsheet)
    ========================================================= */
 'use strict';
 
@@ -9,6 +9,7 @@ const K = {
   streak:  'quizpro.streak.v1',
   theme:   'quizpro.theme.v1'
 };
+const CHEATSHEET_KEY = 'cheatsheet.data.v1';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const store = {
@@ -328,15 +329,12 @@ function openImport() { openModal('modalImport'); $('importArea').focus(); }
 function closeImport() { closeModal('modalImport'); }
 
 function bindImportEvents() {
-  // Nút "Tạo mới" trên thanh header
   const bNew = $('btnCreateNew');
   if (bNew) bNew.onclick = () => { playClick(); createNewExam(); };
   
-  // Nút "Import JSON" trên thanh header
   const bImport = $('btnImportOpen');
   if (bImport) bImport.onclick = openImport;
 
-  // Modal
   $('btnImportCancel').onclick = closeImport;
   $('modalImport').addEventListener('click', e => {
     if (e.target.id === 'modalImport') closeImport();
@@ -763,6 +761,9 @@ function submitExam(auto) {
   const before = streak.count || 0;
   touchStreak();
   const gained = (streak.count || 0) > before;
+  
+  // Đẩy explain sang Cheatsheet
+  const addedToCheat = syncToCheatsheet(exam, result.details);
 
   history.push({
     examId: exam.id, title: exam.title, correct: result.correct,
@@ -775,14 +776,62 @@ function submitExam(auto) {
   if (history.length > 300) history = history.slice(-300);
   store.set(K.history, history);
 
-  renderResult(exam, result, timeSpent, gained, auto);
+  renderResult(exam, result, timeSpent, gained, auto, addedToCheat);
   session = null;
+}
+
+/* =========================================================
+   SYNC TO CHEATSHEET
+   ========================================================= */
+function syncToCheatsheet(exam, details) {
+  let cheatsheet = { title: "Cheatsheet của tôi", subtitle: "Tự động lưu từ StudyPro", sections: [] };
+  try {
+    const raw = localStorage.getItem(CHEATSHEET_KEY);
+    if (raw) cheatsheet = JSON.parse(raw);
+  } catch (e) { console.error("Lỗi đọc cheatsheet", e); }
+
+  const secTitle = exam.subject || exam.title || "Chung";
+  let section = cheatsheet.sections.find(s => s.title === secTitle);
+  
+  if (!section) {
+    section = {
+      title: secTitle,
+      icon: "📚",
+      // Random màu pastel cho đẹp
+      color: "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
+      items: []
+    };
+    cheatsheet.sections.push(section);
+  }
+
+  let added = 0;
+  details.forEach((d, i) => {
+    const q = exam.questions[i];
+    if (!q.explain) return; // Chỉ lưu câu có giải thích
+
+    // Check trùng lặp dựa vào nội dung câu hỏi
+    const isDup = section.items.some(item => item.term === q.question);
+    if (isDup) return;
+
+    section.items.push({
+      term: q.question,
+      desc: q.explain,
+      code: "",
+      tags: [exam.title]
+    });
+    added++;
+  });
+
+  if (added > 0) {
+    localStorage.setItem(CHEATSHEET_KEY, JSON.stringify(cheatsheet));
+  }
+  return added;
 }
 
 /* =========================================================
    RESULT
    ========================================================= */
-function renderResult(exam, result, timeSpent, gained, auto) {
+function renderResult(exam, result, timeSpent, gained, auto, addedToCheat) {
   const optOrders = (session && session.optionOrders) || {};
   const pct = Math.round(result.correct / Math.max(1, result.total) * 100);
   const C = 2 * Math.PI * 52;
@@ -892,6 +941,20 @@ function renderResult(exam, result, timeSpent, gained, auto) {
   }).join('');
 
   applyMath($('reviewList'));
+  
+  // Logic bật nút Mở Cheatsheet
+  const btnOpenCheat = $('btnOpenCheatsheet');
+  if (btnOpenCheat) {
+    btnOpenCheat.style.display = addedToCheat > 0 ? '' : 'none';
+    btnOpenCheat.onclick = () => {
+      playClick();
+      window.open('cheatsheet.html', '_blank');
+    };
+  }
+
+  if (addedToCheat > 0) {
+    setTimeout(() => toast(`Đã lưu ${addedToCheat} câu vào Cheatsheet! 📘`, 'ok'), 1200);
+  }
 
   const examSnapshot = exam;
   $('btnRedo').onclick = () => { playClick(); startExam(examSnapshot.id); };
@@ -1299,8 +1362,9 @@ function bindMainEvents() {
     if (session) { e.preventDefault(); e.returnValue = ''; }
   });
 }
+
 /* =========================================================
-   DANGER ZONE — Xoá lịch sử / Xoá toàn bộ
+   DANGER ZONE
    ========================================================= */
 function threeStepConfirm(title, steps, onFinal) {
   function step(i) {
@@ -1321,7 +1385,6 @@ function threeStepConfirm(title, steps, onFinal) {
 }
 
 function bindDangerZone() {
-  // 1. Xoá lịch sử làm bài
   const bHist = $('btnResetHistory');
   if (bHist) bHist.onclick = () => {
     playClick();
@@ -1339,7 +1402,6 @@ function bindDangerZone() {
     });
   };
 
-  // 2. Xoá toàn bộ dữ liệu (Reset App)
   const bAll = $('btnResetAll');
   if (bAll) bAll.onclick = () => {
     playClick();
@@ -1348,19 +1410,16 @@ function bindDangerZone() {
       { desc: 'Hành động này <b>không thể khôi phục</b>. Hãy chắc chắn bạn đã bấm <b>Xuất dữ liệu</b> để sao lưu nếu cần.', okText: 'Tôi hiểu rõ hậu quả' },
       { desc: 'CẢNH BÁO CUỐI CÙNG: Toàn bộ dữ liệu sẽ bị xoá sạch khỏi trình duyệt. Bấm <b>Xoá vĩnh viễn</b> để đồng ý.', okText: 'Xoá vĩnh viễn' }
     ], () => {
-      // Reset sạch các biến trong RAM
       exams = [];
       history = [];
       streak = { count: 0, best: 0, last: 0 };
       theme = 'dark';
       
-      // Ghi đè null vào localStorage
       store.set(K.exams, exams);
       store.set(K.history, history);
       store.set(K.streak, streak);
       store.set(K.theme, theme);
       
-      // Reset UI
       applyTheme();
       const box = $('themes');
       if (box) box.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s.dataset.theme === theme));
@@ -1396,7 +1455,6 @@ function openEdit(examId) {
   renderEditQuestions();
 }
 function createNewExam() {
-  // 1. Tạo object rỗng
   editingExam = {
     id: uid(),
     title: "Đề thi mới",
@@ -1407,18 +1465,15 @@ function createNewExam() {
     questions: []
   };
 
-  // 2. Đổ dữ liệu vào form
   $('editTitle').value = editingExam.title;
   $('editSubject').value = '';
   $('editDuration').value = 0;
   $('editShuffleQ').checked = false;
   $('editShuffleO').checked = false;
 
-  // 3. Chuyển màn hình
   showScreen('screen-edit');
   renderEditQuestions();
 
-  // 4. Tự động thêm 1 câu MCQ cho tiện & focus vào ô Tiêu đề
   setTimeout(() => {
     const btnAdd = document.querySelector('.edit-add-bar [data-add="mcq"]');
     if (btnAdd) btnAdd.click();
@@ -1426,7 +1481,7 @@ function createNewExam() {
     const titleInput = $('editTitle');
     if (titleInput) {
       titleInput.focus();
-      titleInput.select(); // Bôi đen chữ "Đề thi mới" để gõ đè luôn
+      titleInput.select();
     }
   }, 80);
 }
@@ -1493,7 +1548,7 @@ function renderEditQ(q, qi) {
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">
           Đáp án được chấp nhận (mỗi dòng 1)
         </label>
-        <textarea class="q-input" data-qtext spellcheck="false" placeholder="Câu hỏi (Markdown + LaTeX)">${esc(q.question)}</textarea>
+        <textarea class="q-input" data-answers spellcheck="false" placeholder="3&#10;ba">${esc((q.answers || []).join('\n'))}</textarea>
         <label class="check" style="margin-top:8px;font-size:12.5px;display:flex;align-items:center;gap:8px">
           <input type="checkbox" data-strict ${q.strict ? 'checked' : ''}>
           So khớp chính xác (phân biệt hoa/thường)
@@ -1512,11 +1567,11 @@ function renderEditQ(q, qi) {
           <button class="btn sm danger" data-del-q="${qi}">Xoá</button>
         </div>
       </div>
-      <textarea class="q-input" data-explain spellcheck="false" placeholder="Giải thích đáp án...">${esc(q.explain || '')}</textarea>
+      <textarea class="q-input" data-qtext spellcheck="false" placeholder="Câu hỏi (Markdown + LaTeX)">${esc(q.question)}</textarea>
       ${body}
       <div class="edit-explain">
         <label>Giải thích (tuỳ chọn)</label>
-        <textarea class="q-input" data-explain placeholder="Giải thích đáp án...">${esc(q.explain || '')}</textarea>
+        <textarea class="q-input" data-explain spellcheck="false" placeholder="Giải thích đáp án...">${esc(q.explain || '')}</textarea>
       </div>
     </div>`;
 }
@@ -1759,7 +1814,7 @@ function saveEdit() {
 }
 
 /* =========================================================
-   INIT — ⚠️ ĐÃ THÊM bindEditEvents()
+   INIT
    ========================================================= */
 function init() {
   applyTheme();
