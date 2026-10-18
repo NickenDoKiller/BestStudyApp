@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cheatsheet — Ghi nhớ mọi thứ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#07070b;
+    --card:rgba(255,255,255,.038);
+    --card-hover:rgba(255,255,255,.065);
+    --border:rgba(255,255,255,.08);
+    --border-hover:rgba(255,255,255,.18);
+    --text:#ececf4;
+    --muted:#8b8ba3;
+    --code-bg:#0b0b12;
+    --radius:16px;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;overflow-x:hidden;
+  }
+  .bg-mesh{
+    position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(720px 520px at 10% -8%, rgba(124,92,255,.22), transparent 62%),
+      radial-gradient(620px 520px at 90% 2%, rgba(34,211,238,.15), transparent 62%),
+      radial-gradient(900px 620px at 50% 112%, rgba(236,72,153,.11), transparent 62%);
+  }
+  .bg-grid{
+    position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.28;
+    background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(ellipse 100% 70% at 50% 0%,#000 30%,transparent 78%);
+    -webkit-mask-image:radial-gradient(ellipse 100% 70% at 50% 0%,#000 30%,transparent 78%);
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    background:rgba(7,7,11,.7);
+    border-bottom:1px solid var(--border);
+  }
+  .hdr{
+    max-width:1420px;margin:0 auto;padding:13px 24px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .logo{
+    display:flex;align-items:center;gap:10px;
+    font-weight:700;font-size:15px;letter-spacing:-.02em;
+    white-space:nowrap;
+  }
+  .logo-mark{
+    width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(135deg,#7c5cff,#22d3ee);
+    display:grid;place-items:center;font-size:15px;
+    box-shadow:0 0 22px rgba(124,92,255,.45);
+  }
+  .logo-text{
+    background:linear-gradient(90deg,#fff,#b9b3ff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  .search{
+    flex:1;min-width:200px;max-width:520px;
+    position:relative;display:flex;align-items:center;
+    margin-left:auto;
+  }
+  .search svg{
+    position:absolute;left:13px;width:15px;height:15px;
+    stroke:var(--muted);fill:none;stroke-width:2;pointer-events:none;
+    transition:.2s;
+  }
+  .search input{
+    width:100%;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--border);
+    border-radius:11px;
+    padding:9px 74px 9px 37px;
+    color:var(--text);font-size:13.5px;font-family:inherit;
+    outline:none;transition:.22s;
+  }
+  .search input::placeholder{color:#5f5f75}
+  .search input:focus{
+    border-color:rgba(124,92,255,.55);
+    background:rgba(124,92,255,.07);
+    box-shadow:0 0 0 3px rgba(124,92,255,.12);
+  }
+  .search input:focus + svg{stroke:#a692ff}
+  .search kbd{
+    position:absolute;right:10px;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    color:#6d6d85;background:rgba(255,255,255,.05);
+    border:1px solid var(--border);border-radius:6px;
+    padding:3px 6px;pointer-events:none;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:13px;font-weight:500;
+    padding:9px 15px;border-radius:11px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.04);
+    color:var(--text);cursor:pointer;
+    transition:.2s;white-space:nowrap;
+  }
+  .btn:hover{background:rgba(255,255,255,.09);border-color:var(--border-hover);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .btn-primary{
+    background:linear-gradient(135deg,#7c5cff,#6366f1);
+    border-color:transparent;color:#fff;
+    box-shadow:0 4px 20px rgba(124,92,255,.35);
+  }
+  .btn-primary:hover{
+    background:linear-gradient(135deg,#8b6dff,#7075ff);
+    box-shadow:0 6px 26px rgba(124,92,255,.5);
+  }
+  .btn-merge{
+    background:linear-gradient(135deg,rgba(34,211,238,.15),rgba(124,92,255,.15));
+    border-color:rgba(34,211,238,.35);
+    color:#7ee7f7;
+  }
+  .btn-merge:hover{
+    background:linear-gradient(135deg,rgba(34,211,238,.25),rgba(124,92,255,.25));
+    border-color:rgba(34,211,238,.55);
+    box-shadow:0 4px 20px rgba(34,211,238,.25);
+  }
+  .btn-icon{padding:9px;width:37px;justify-content:center}
+
+  /* ---------- MAIN ---------- */
+  main{max-width:1420px;margin:0 auto;padding:44px 24px 120px}
+
+  .hero{margin-bottom:16px;animation:rise .6s cubic-bezier(.22,1,.36,1) backwards}
+  .hero h1{
+    font-size:clamp(28px,4.2vw,42px);
+    font-weight:700;letter-spacing:-.035em;line-height:1.15;
+    background:linear-gradient(120deg,#fff 15%,#c4bcff 55%,#7ee7f7 95%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero p{
+    margin-top:10px;font-size:14.5px;color:var(--muted);
+    line-height:1.6;max-width:640px;
+  }
+
+  .section{margin-top:44px}
+  .section:first-of-type{margin-top:34px}
+  .section-head{
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:16px;
+  }
+  .section-icon{
+    width:38px;height:38px;border-radius:11px;
+    display:grid;place-items:center;font-size:18px;flex-shrink:0;
+    background:color-mix(in srgb, var(--c) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--c) 28%, transparent);
+    box-shadow:0 0 22px color-mix(in srgb, var(--c) 14%, transparent);
+  }
+  .section-head h2{
+    font-size:19px;font-weight:600;letter-spacing:-.02em;
+  }
+  .section-count{
+    font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:999px;
+    background:color-mix(in srgb, var(--c) 13%, transparent);
+    color:color-mix(in srgb, var(--c) 75%, #fff);
+    border:1px solid color-mix(in srgb, var(--c) 22%, transparent);
+  }
+  .section-line{
+    flex:1;height:1px;
+    background:linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), transparent);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+    gap:14px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:17px 18px;
+    transition:background .25s, border-color .25s, transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+    animation:rise .55s cubic-bezier(.22,1,.36,1) backwards;
+    overflow:hidden;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}}
+  .card::after{
+    content:'';position:absolute;left:0;top:14px;bottom:14px;width:2px;
+    border-radius:2px;
+    background:var(--c);
+    opacity:0;transition:.25s;
+    box-shadow:0 0 14px var(--c);
+  }
+  .card:hover{
+    background:var(--card-hover);
+    border-color:var(--border-hover);
+    transform:translateY(-3px);
+    box-shadow:0 14px 40px -12px rgba(0,0,0,.7);
+  }
+  .card:hover::after{opacity:.85}
+
+  .term{
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;font-weight:600;letter-spacing:-.02em;
+    color:color-mix(in srgb, var(--c) 72%, #fff);
+    line-height:1.45;
+    word-break:break-word;
+  }
+  .desc{
+    margin-top:8px;font-size:13.5px;line-height:1.65;
+    color:#a8a8bd;word-break:break-word;
+  }
+
+  .code-wrap{position:relative;margin-top:12px}
+  .code{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px 13px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.3px;line-height:1.62;
+    color:#c6d0dc;
+    overflow-x:auto;white-space:pre;
+    tab-size:2;
+    scrollbar-width:thin;
+  }
+  .code::-webkit-scrollbar{height:5px}
+  .code::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
+
+  .copy{
+    position:absolute;top:7px;right:7px;
+    width:27px;height:27px;border-radius:8px;
+    display:grid;place-items:center;
+    background:rgba(20,20,30,.85);
+    border:1px solid var(--border);
+    color:var(--muted);cursor:pointer;
+    opacity:0;transition:.2s;
+    backdrop-filter:blur(6px);
+  }
+  .card:hover .copy{opacity:1}
+  .copy:hover{background:rgba(124,92,255,.25);color:#fff;border-color:rgba(124,92,255,.5)}
+  .copy svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .copy.done{color:#4ade80;border-color:rgba(74,222,128,.4)}
+  @media (hover:none){.copy{opacity:1}}
+
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;font-weight:500;
+    padding:3px 8px;border-radius:6px;
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--border);
+    color:#8f8fa8;
+  }
+
+  .empty{
+    text-align:center;padding:90px 20px;
+    animation:rise .5s backwards;
+  }
+  .empty-icon{font-size:44px;opacity:.5;margin-bottom:16px}
+  .empty h3{font-size:17px;font-weight:600;margin-bottom:8px}
+  .empty p{font-size:13.5px;color:var(--muted);line-height:1.6}
+
+  /* ---------- MODAL ---------- */
+  .overlay{
+    position:fixed;inset:0;z-index:100;
+    background:rgba(3,3,6,.75);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    display:grid;place-items:center;padding:20px;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .overlay.open{opacity:1;pointer-events:auto}
+
+  .modal{
+    width:min(960px,100%);
+    height:92vh;
+    max-height:92vh;
+    background:#0c0c13;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:20px;
+    display:flex;flex-direction:column;overflow:hidden;
+    transform:scale(.96) translateY(12px);
+    transition:transform .32s cubic-bezier(.22,1,.36,1);
+    box-shadow:0 40px 100px -20px rgba(0,0,0,.9), 0 0 0 1px rgba(124,92,255,.08);
+  }
+  .overlay.open .modal{transform:scale(1) translateY(0)}
+
+  .modal-head{
+    display:flex;align-items:center;gap:12px;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .modal-head h3{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  .modal-head .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:#4ade80;box-shadow:0 0 10px #4ade80;
+  }
+  .modal-head .spacer{flex:1}
+  .modal-head .hint{
+    font-size:11.5px;color:#5f5f75;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  .modal-body{flex:1;display:flex;overflow:hidden;min-height:0}
+  textarea{
+    flex:1;width:100%;
+    background:#08080e;
+    border:none;outline:none;resize:none;
+    color:#c6d0dc;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;line-height:1.75;
+    padding:20px 22px;
+    tab-size:2;
+    scrollbar-width:thin;
+  }
+  textarea::-webkit-scrollbar{width:8px}
+  textarea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+  textarea::-webkit-scrollbar-track{background:transparent}
+  textarea::selection{background:rgba(124,92,255,.35)}
+
+  .modal-foot{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:14px 20px;
+    border-top:1px solid var(--border);
+    background:rgba(255,255,255,.015);
+    flex-shrink:0;
+  }
+  .modal-foot .spacer{flex:1}
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:34px;z-index:200;
+    transform:translate(-50%,26px);
+    background:rgba(20,20,30,.95);
+    border:1px solid rgba(124,92,255,.35);
+    color:var(--text);
+    padding:11px 20px;border-radius:12px;
+    font-size:13px;font-weight:500;
+    box-shadow:0 18px 50px -10px rgba(0,0,0,.8);
+    backdrop-filter:blur(14px);
+    opacity:0;pointer-events:none;
+    transition:.3s cubic-bezier(.22,1,.36,1);
+    max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.error{border-color:rgba(248,113,113,.5);color:#fca5a5}
+
+  @media(max-width:640px){
+    .hdr{padding:11px 15px;gap:10px}
+    .logo-text{display:none}
+    .search{order:3;width:100%;max-width:none;margin-left:0}
+    main{padding:28px 15px 90px}
+    .grid{grid-template-columns:1fr}
+    .hero h1{font-size:26px}
+    .modal-head .hint{display:none}
+    .modal{height:94vh;max-height:94vh}
+  }
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<header>
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-mark">📘</div>
+      <span class="logo-text">Cheatsheet</span>
+    </div>
+
+    <div class="search">
+      <input id="search" type="text" placeholder="Tìm kiếm cheatsheet..." autocomplete="off">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <kbd>⌘K</kbd>
+    </div>
+
+    <button class="btn btn-icon" id="btnDownload" title="Tải JSON về máy">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+    </button>
+    <button class="btn btn-primary" id="btnOpen">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>
+      Nạp JSON
+    </button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="dot"></span>
+      <h3>Dán JSON của bạn</h3>
+      <span class="spacer"></span>
+      <span class="hint">⌘/Ctrl + Enter để Render · ⌘/Ctrl + Shift + Enter để Thêm vào</span>
+    </div>
+
+    <div class="modal-body">
+      <textarea id="editor" spellcheck="false" placeholder='{ "title": "...", "sections": [...] }'></textarea>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn" id="btnFormat">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h13"/></svg>
+        Định dạng
+      </button>
+      <button class="btn" id="btnSample">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 10l-4.4 3.4L17 20l-5-3-5 3 1.4-6.6L4 10l5.8-1.4z"/></svg>
+        Mẫu
+      </button>
+      <span class="spacer"></span>
+      <button class="btn" id="btnCancel">Huỷ</button>
+      <button class="btn btn-merge" id="btnMerge" title="Cộng dồn vào dữ liệu hiện tại (không mất dữ liệu cũ)">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Thêm vào
+      </button>
+      <button class="btn btn-primary" id="btnApply" title="Thay thế toàn bộ dữ liệu hiện tại">
+        <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        Render
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DỮ LIỆU MẪU
+   ============================================================ */
+const SAMPLE = {
+  title: "Cheatsheet của tôi",
+  subtitle: "Ghi nhớ mọi thứ — chỉ cần dán JSON, mọi thứ tự lên hình. Nhấn ⌘/Ctrl + E để mở editor.",
+  sections: [
+    {
+      title: "JavaScript",
+      icon: "⚡",
+      color: "#f7df1e",
+      items: [
+        { term: "Optional Chaining", desc: "Truy cập thuộc tính an toàn, trả về undefined nếu gặp null/undefined thay vì throw lỗi.", code: "const city = user?.address?.city;", tags: ["ES2020"] },
+        { term: "Nullish Coalescing", desc: "Lấy giá trị mặc định CHỈ khi bên trái là null hoặc undefined (khác với || ).", code: "const name = input ?? 'Ẩn danh';", tags: ["ES2020"] },
+        { term: "Destructuring + Rest", desc: "Bóc tách mảng/object ra biến riêng, phần còn lại gom vào rest.", code: "const [a, b, ...rest] = [1, 2, 3, 4];\nconst { name, ...others } = user;", tags: ["ES6"] },
+        { term: "Array methods hay dùng", desc: "Bộ tứ kinh điển khi làm việc với mảng.", code: "arr.map(x => x * 2)\narr.filter(x => x > 0)\narr.reduce((s, x) => s + x, 0)\narr.find(x => x.id === 3)", tags: ["Array"] }
+      ]
+    },
+    {
+      title: "CSS",
+      icon: "🎨",
+      color: "#38bdf8",
+      items: [
+        { term: "Flexbox căn giữa", desc: "Cách nhanh nhất để căn giữa mọi thứ theo cả 2 trục.", code: ".parent {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}", tags: ["Layout"] },
+        { term: "Grid tự động responsive", desc: "Không cần media query, cột tự co giãn theo bề rộng.", code: "grid-template-columns:\n  repeat(auto-fill, minmax(300px, 1fr));", tags: ["Grid"] },
+        { term: "Clamp cho typography", desc: "Font size co giãn mượt giữa min và max, không cần media query.", code: "font-size: clamp(1rem, 2.5vw, 2rem);", tags: ["Responsive"] },
+        { term: "Color Mix", desc: "Pha trộn 2 màu trực tiếp trong CSS, cực tiện cho theme.", code: "color: color-mix(in srgb, #7c5cff 70%, white);", tags: ["Modern"] }
+      ]
+    },
+    {
+      title: "Git",
+      icon: "🌿",
+      color: "#f97316",
+      items: [
+        { term: "Undo commit cuối (giữ code)", desc: "Bỏ commit gần nhất nhưng giữ nguyên thay đổi trong working tree.", code: "git reset --soft HEAD~1", tags: ["Reset"] },
+        { term: "Sửa message commit cuối", desc: "Đổi nội dung message của commit vừa tạo.", code: "git commit --amend -m \"message mới\"", tags: ["Amend"] },
+        { term: "Xoá file khỏi git nhưng giữ trên máy", desc: "Bỏ theo dõi file, thêm vào .gitignore.", code: "git rm --cached path/to/file", tags: ["Ignore"] },
+        { term: "Stash nhanh", desc: "Cất tạm thay đổi để chuyển branch, xong lấy lại.", code: "git stash -u\ngit stash pop", tags: ["Stash"] }
+      ]
+    },
+    {
+      title: "Terminal",
+      icon: "⌨️",
+      color: "#4ade80",
+      items: [
+        { term: "Tìm file theo tên", desc: "Tìm nhanh file trong thư mục hiện tại.", code: "find . -name \"*.json\" -type f", tags: ["find"] },
+        { term: "Grep đệ quy có số dòng", desc: "Tìm chuỗi trong toàn bộ source code.", code: "grep -rn \"TODO\" ./src", tags: ["grep"] },
+        { term: "Xem port đang chiếm", desc: "Kiểm tra tiến trình nào đang dùng port.", code: "lsof -i :3000", tags: ["port"] }
+      ]
+    }
+  ]
+};
+
+/* ============================================================
+   HẰNG SỐ & TRẠNG THÁI
+   ============================================================ */
+const DEFAULT_COLORS = ["#7c5cff", "#22d3ee", "#f472b6", "#4ade80", "#fbbf24", "#f87171", "#a78bfa"];
+const STORAGE_KEY = "cheatsheet.data.v1";
+
+const state = { data: null, query: "" };
+
+/* ============================================================
+   TIỆN ÍCH
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
+  { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+));
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.className = "toast show" + (isError ? " error" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = "toast"; }, 2600);
+}
+
+/* ============================================================
+   CHUẨN HOÁ DỮ LIỆU
+   ============================================================ */
+function normalizeItem(it, idx) {
+  if (typeof it === "string") return { term: it, desc: "", code: "", tags: [] };
+  if (!it || typeof it !== "object") return { term: `Item ${idx + 1}`, desc: "", code: "", tags: [] };
+  return {
+    term: it.term || it.title || it.name || it.key || "",
+    desc: it.desc || it.description || it.note || it.content || "",
+    code: it.code || it.example || it.snippet || "",
+    tags: Array.isArray(it.tags) ? it.tags.map(String)
+        : it.tag ? [String(it.tag)] : []
+  };
+}
+
+function normalize(data) {
+  if (Array.isArray(data)) data = { sections: data };
+  if (!data || typeof data !== "object") throw new Error("JSON phải là object hoặc array");
+
+  const rawSections = Array.isArray(data.sections) ? data.sections
+                    : Array.isArray(data.items) ? [{ title: data.title || "Mục", items: data.items }]
+                    : [];
+
+  return {
+    title: data.title || "Cheatsheet",
+    subtitle: data.subtitle || data.description || "",
+    sections: rawSections.map((s, i) => ({
+      title: s.title || s.name || `Mục ${i + 1}`,
+      icon: s.icon || "📌",
+      color: s.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length],
+      items: (Array.isArray(s.items) ? s.items : []).map(normalizeItem)
+    }))
+  };
+}
+
+/* ============================================================
+   LƯU / TẢI
+   ============================================================ */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    state.data = raw ? normalize(JSON.parse(raw)) : normalize(SAMPLE);
+  } catch {
+    state.data = normalize(SAMPLE);
+  }
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); } catch {}
+}
+
+/* ============================================================
+   MERGE — cộng dồn dữ liệu thay vì thay thế
+   ============================================================ */
+function mergeData(existing, incoming) {
+  const merged = JSON.parse(JSON.stringify(existing));
+
+  incoming.sections.forEach(newSec => {
+    const key = newSec.title.trim().toLowerCase();
+    const match = merged.sections.find(
+      s => s.title.trim().toLowerCase() === key
+    );
+
+    if (match) {
+      newSec.items.forEach(newItem => {
+        const dup = match.items.some(
+          i => i.term.trim().toLowerCase() === newItem.term.trim().toLowerCase()
+        );
+        if (!dup) match.items.push(newItem);
+      });
+      if ((!match.icon || match.icon === "📌") && newSec.icon) match.icon = newSec.icon;
+    } else {
+      merged.sections.push(newSec);
+    }
+  });
+
+  if (incoming.title && incoming.title !== "Cheatsheet") merged.title = incoming.title;
+  if (incoming.subtitle) merged.subtitle = incoming.subtitle;
+
+  return merged;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const COPY_ICON = `<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>`;
+const CHECK_ICON = `<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>`;
+
+function itemHTML(it, i) {
+  const delay = Math.min(i * 26, 380);
+  let html = `<article class="card" style="animation-delay:${delay}ms">`;
+
+  if (it.term) html += `<div class="term">${esc(it.term)}</div>`;
+  if (it.desc) html += `<p class="desc">${esc(it.desc)}</p>`;
+
+  if (it.code) {
+    html += `<div class="code-wrap">
+      <pre class="code">${esc(it.code)}</pre>
+      <button class="copy" title="Copy code">${COPY_ICON}</button>
+    </div>`;
+  }
+
+  if (it.tags.length) {
+    html += `<div class="tags">${it.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+  }
+
+  return html + `</article>`;
+}
+
+function render() {
+  const d = state.data;
+  const q = state.query.trim().toLowerCase();
+  const app = $("#app");
+
+  let html = "";
+
+  if (d.title || d.subtitle) {
+    html += `<div class="hero">
+      ${d.title ? `<h1>${esc(d.title)}</h1>` : ""}
+      ${d.subtitle ? `<p>${esc(d.subtitle)}</p>` : ""}
+    </div>`;
+  }
+
+  let visibleCount = 0;
+
+  d.sections.forEach((sec, si) => {
+    const secMatch = q && sec.title.toLowerCase().includes(q);
+    let items = sec.items;
+
+    if (q && !secMatch) {
+      items = items.filter(it =>
+        `${it.term} ${it.desc} ${it.code} ${it.tags.join(" ")}`.toLowerCase().includes(q)
+      );
+    }
+    if (q && !secMatch && items.length === 0) return;
+
+    visibleCount += items.length;
+
+    html += `<section class="section" style="--c:${esc(sec.color)}">
+      <div class="section-head">
+        <span class="section-icon">${esc(sec.icon)}</span>
+        <h2>${esc(sec.title)}</h2>
+        <span class="section-count">${items.length}</span>
+        <span class="section-line"></span>
+      </div>
+      <div class="grid">`;
+
+    items.forEach((it, i) => { html += itemHTML(it, si * 3 + i); });
+
+    html += `</div></section>`;
+  });
+
+  if (visibleCount === 0) {
+    html += q
+      ? `<div class="empty">
+           <div class="empty-icon">🔍</div>
+           <h3>Không tìm thấy "${esc(state.query)}"</h3>
+           <p>Thử từ khoá khác, hoặc nạp một file JSON mới.</p>
+         </div>`
+      : `<div class="empty">
+           <div class="empty-icon">🗂️</div>
+           <h3>Chưa có dữ liệu</h3>
+           <p>Nhấn <strong>Nạp JSON</strong> ở góc trên để bắt đầu.</p>
+         </div>`;
+  }
+
+  app.innerHTML = html;
+}
+
+/* ============================================================
+   SỰ KIỆN
+   ============================================================ */
+// Search
+$("#search").addEventListener("input", (e) => {
+  state.query = e.target.value;
+  render();
+});
+
+// Copy code (event delegation)
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".copy");
+  if (!btn) return;
+  const codeEl = btn.parentElement.querySelector(".code");
+  if (!codeEl) return;
+
+  navigator.clipboard.writeText(codeEl.textContent).then(() => {
+    btn.classList.add("done");
+    btn.innerHTML = CHECK_ICON;
+    toast("Đã copy code 📋");
+    setTimeout(() => {
+      btn.classList.remove("done");
+      btn.innerHTML = COPY_ICON;
+    }, 1500);
+  }).catch(() => toast("Không copy được", true));
+});
+
+// Modal
+const overlay = $("#overlay");
+const editor = $("#editor");
+
+function openModal() {
+  editor.value = JSON.stringify(state.data, null, 2);
+  overlay.classList.add("open");
+  setTimeout(() => editor.focus(), 120);
+}
+function closeModal() { overlay.classList.remove("open"); }
+
+$("#btnOpen").addEventListener("click", openModal);
+$("#btnCancel").addEventListener("click", closeModal);
+overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+
+// RENDER — thay thế toàn bộ
+$("#btnApply").addEventListener("click", () => {
+  try {
+    const parsed = JSON.parse(editor.value);
+    state.data = normalize(parsed);
+    saveState();
+    render();
+    closeModal();
+    toast("Đã nạp cheatsheet ✨");
+  } catch (err) {
+    toast("JSON lỗi: " + err.message, true);
+  }
+});
+
+// MERGE — cộng dồn vào dữ liệu hiện tại
+$("#btnMerge").addEventListener("click", () => {
+  try {
+    const parsed = normalize(JSON.parse(editor.value));
+    const beforeCount = state.data.sections.reduce((s, x) => s + x.items.length, 0);
+
+    state.data = mergeData(state.data, parsed);
+    saveState();
+    render();
+    closeModal();
+
+    const afterCount = state.data.sections.reduce((s, x) => s + x.items.length, 0);
+    const added = afterCount - beforeCount;
+    toast(added > 0 ? `Đã thêm ${added} mục mới ✅` : "Không có mục mới (đã tồn tại)");
+  } catch (err) {
+    toast("JSON lỗi: " + err.message, true);
+  }
+});
+
+$("#btnFormat").addEventListener("click", () => {
+  try {
+    editor.value = JSON.stringify(JSON.parse(editor.value), null, 2);
+    toast("Đã định dạng JSON");
+  } catch (err) {
+    toast("JSON lỗi: " + err.message, true);
+  }
+});
+
+$("#btnSample").addEventListener("click", () => {
+  editor.value = JSON.stringify(SAMPLE, null, 2);
+  toast("Đã nạp dữ liệu mẫu");
+});
+
+// Download
+$("#btnDownload").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cheatsheet.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Đã tải cheatsheet.json ⬇️");
+});
+
+// Drag & drop file JSON vào textarea
+editor.addEventListener("dragover", (e) => { e.preventDefault(); });
+editor.addEventListener("drop", (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { editor.value = reader.result; toast("Đã đọc file " + file.name); };
+  reader.readAsText(file);
+});
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  const mod = e.metaKey || e.ctrlKey;
+
+  if (mod && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+    $("#search").focus();
+    $("#search").select();
+  }
+  if (mod && e.key.toLowerCase() === "e") {
+    e.preventDefault();
+    overlay.classList.contains("open") ? closeModal() : openModal();
+  }
+  if (overlay.classList.contains("open")) {
+    if (e.key === "Escape") closeModal();
+    if (mod && e.shiftKey && e.key === "Enter") { e.preventDefault(); $("#btnMerge").click(); }
+    else if (mod && e.key === "Enter") { e.preventDefault(); $("#btnApply").click(); }
+  }
+  if (e.key === "Escape" && document.activeElement === $("#search")) {
+    $("#search").blur();
+  }
+});
+
+/* ============================================================
+   KHỞI ĐỘNG
+   ============================================================ */
+loadState();
+render();
+</script>
+</body>
+</html>
