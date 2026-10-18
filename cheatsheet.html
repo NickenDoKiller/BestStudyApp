@@ -519,12 +519,28 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
 // Hàm chuyển đổi Markdown sang HTML
 function rich(text) {
   if (!text) return '';
+  let s = String(text);
+  
+  const mathBlocks = [];
+  s = s.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g, (match) => {
+    mathBlocks.push(match);
+    return `MATHPLACEHOLDER${mathBlocks.length - 1}`; 
+  });
+  
+  // Chạy Markdown
+  let html = s;
   if (typeof marked !== 'undefined') {
-    try { return marked.parse(String(text), { breaks: true, gfm: true }); } catch(e) {}
+    try { html = marked.parse(s, { breaks: true, gfm: true }); } catch(e) {}
+  } else {
+    html = esc(s).replace(/\n/g, '<br>');
   }
-  return esc(text).replace(/\n/g, '<br>');
+  
+  mathBlocks.forEach((block, i) => {
+    html = html.replace(`MATHPLACEHOLDER${i}`, block);
+  });
+  
+  return html;
 }
-
 let toastTimer;
 function toast(msg, isError = false) {
   const el = $("#toast");
