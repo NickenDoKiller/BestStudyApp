@@ -2256,3 +2256,26 @@ textarea {
   .edit-meta { grid-template-columns: 1fr; padding: 16px; }
   .edit-q { padding: 16px; }
 }
+/* Tag cảnh báo trong lúc thi */
+.q-tag-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171; /* Màu đỏ */
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  margin-left: auto; /* Đẩy sang sát mép phải của q-head */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: pulse-danger 2s infinite;
+}
+
+@keyframes pulse-danger {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}

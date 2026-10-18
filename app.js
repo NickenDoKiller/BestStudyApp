@@ -624,6 +624,9 @@ function renderQuestion() {
     body = `<input class="short-input" id="shortInput" type="text"
       placeholder="Nhập câu trả lời của bạn..." value="${esc(a || '')}" autocomplete="off" />`;
   }
+  const allOrNothingTag = q.allOrNothing 
+    ? `<span class="q-tag-danger" title="Sai 1 ý là mất điểm cả câu">🎯 Tất cả hoặc không</span>` 
+    : '';
 
   const TYPE_LABEL = { mcq: 'Trắc nghiệm', truefalse: 'Đúng / Sai', short: 'Trả lời ngắn' };
   $('qContainer').innerHTML = `
@@ -631,6 +634,7 @@ function renderQuestion() {
       <div class="q-head">
         <span class="q-num">Câu ${index + 1}</span>
         <span class="q-type">${TYPE_LABEL[q.type] || ''}</span>
+        ${allOrNothingTag}
       </div>
       <div class="q-text rich">${rich(q.question)}</div>
       ${body}
