@@ -75,7 +75,7 @@ function normShort(str) {
 }
 
 /* =========================================================
-   ÂM THANH
+   ÂM THANH ( SOUNDS 🔊)
    ========================================================= */
 const bgm = document.getElementById('bgMusic');
 const clickSfx = document.getElementById('clickSfx');
@@ -106,7 +106,7 @@ if (bgm) {
 }
 
 /* =========================================================
-   RICH TEXT
+   RICH TEXT 🏷️
    ========================================================= */
 function rich(text) {
   if (text === null || text === undefined) return '';
@@ -172,7 +172,7 @@ function showConfirm(o) {
 }
 
 /* =========================================================
-   THEME
+   THEME ( CHỦ ĐỀ 🌃)
    ========================================================= */
 const THEMES = [
   { id: 'dark',   cls: 'sw-dark',   name: 'Tối' },
@@ -201,7 +201,7 @@ function initThemes() {
 function applyTheme() { document.body.dataset.theme = theme; }
 
 /* =========================================================
-   STREAK
+   STREAK ( CHUỖI 🔥)
    ========================================================= */
 function touchStreak() {
   const now = Date.now();
@@ -247,7 +247,7 @@ function renderStreak() {
 }
 
 /* =========================================================
-   HOME RENDER
+   HOME RENDER ( RENDER TRANG CHỦ 🖌️🎨 )
    ========================================================= */
 function renderHome() {
   renderStreak();
@@ -323,7 +323,7 @@ function renderHome() {
 }
 
 /* =========================================================
-   IMPORT / EXPORT
+   IMPORT / EXPORT ( NHẬP KHẨU / XUẤT KHẨU 📩📦 )
    ========================================================= */
 function openImport() { openModal('modalImport'); $('importArea').focus(); }
 function closeImport() { closeModal('modalImport'); }
@@ -428,7 +428,7 @@ function bindImportActions() {
 }
 
 /* =========================================================
-   NORMALIZE
+   NORMALIZE ( BÌNH THƯỜNG HOÁ )
    ========================================================= */
 function normalizeExam(raw) {
   if (!raw || typeof raw !== 'object') return null;
@@ -766,7 +766,7 @@ function submitExam(auto) {
   touchStreak();
   const gained = (streak.count || 0) > before;
   
-  // Đẩy explain sang Cheatsheet
+  // Đẩy explain ( gợi ý 💡) sang Cheatsheet
   const addedToCheat = syncToCheatsheet(exam, result.details);
 
   history.push({
@@ -785,7 +785,7 @@ function submitExam(auto) {
 }
 
 /* =========================================================
-   SYNC TO CHEATSHEET
+   SYNC TO CHEATSHEET ( ĐỒNG BỘ HOÁ VỚI BẢNG GHI NHỚ ⏳)
    ========================================================= */
 function syncToCheatsheet(exam, details) {
   let cheatsheet = { title: "Cheatsheet của tôi", subtitle: "Tự động lưu từ StudyPro", sections: [] };
@@ -801,7 +801,7 @@ function syncToCheatsheet(exam, details) {
     section = {
       title: secTitle,
       icon: "📚",
-      // Random màu pastel cho đẹp
+      // Random màu pastel
       color: "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'),
       items: []
     };
@@ -833,7 +833,7 @@ function syncToCheatsheet(exam, details) {
 }
 
 /* =========================================================
-   RESULT
+   RESULT ( KẾT QUẢ 🎯)
    ========================================================= */
 function renderResult(exam, result, timeSpent, gained, auto, addedToCheat) {
   const optOrders = (session && session.optionOrders) || {};
@@ -1376,7 +1376,7 @@ function bindMainEvents() {
 }
 
 /* =========================================================
-   DANGER ZONE
+   DANGER ZONE ( KHU VỰC NGUY HIỂM ☠️ )
    ========================================================= */
 function threeStepConfirm(title, steps, onFinal) {
   function step(i) {
