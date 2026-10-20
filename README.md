@@ -1,4 +1,4 @@
-# **📚 StudyPro**
+# **📚 Study-App**
 
 StudyPro là ứng dụng hỗ trợ học tập và luyện tập kiến thức thông qua nhiều hình thức câu hỏi khác nhau.
 
