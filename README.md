@@ -1,14 +1,14 @@
-# **📚 Study-App**
+# **📚 BestStudyApp**
 
-StudyPro là ứng dụng hỗ trợ học tập và luyện tập kiến thức thông qua nhiều hình thức câu hỏi khác nhau.
+BestStudyApp đúng như tên gọi của nó, nó là ứng dụng hỗ trợ học tập và luyện tập kiến thức thông qua nhiều hình thức câu hỏi khác nhau.
 
-Mục tiêu của StudyPro là biến việc học từ kiểu "đọc → nhớ → quên" thành một quá trình luyện tập → kiểm tra → phân tích → cải thiện.
+Mục tiêu của BestStudyApp là biến việc học từ kiểu "đọc → nhớ → quên" thành một quá trình luyện tập → kiểm tra → phân tích → cải thiện, với giao diện hiện đại truyền động lực mạnh mẽ 🔥.
 
 ---
 
 ## ✨ Tính năng
 
-### StudyPro hướng tới việc hỗ trợ nhiều dạng bài tập:
+### BestStudyApp hướng tới việc hỗ trợ nhiều dạng bài tập:
 
 - 📝 Trắc nghiệm — chọn một hoặc nhiều đáp án.
 - ✏️ Trả lời ngắn — nhập câu trả lời trực tiếp.
@@ -18,7 +18,7 @@ Mục tiêu của StudyPro là biến việc học từ kiểu "đọc → nhớ
 
 ## 📊 Theo dõi kết quả
 
-### StudyPro có thể cung cấp các thông tin như:
+### BestStudyApp có thể cung cấp các thông tin như:
 
 - 💯 Điểm số.
 - Số câu đúng / sai.
@@ -33,7 +33,7 @@ Mục tiêu của StudyPro là biến việc học từ kiểu "đọc → nhớ
 
 ## 🎯 Mục tiêu
 
-### StudyPro được xây dựng với một số mục tiêu chính:
+### BestStudyApp được xây dựng với một số mục tiêu chính:
 
 ***Học không chỉ là đọc. Học là phải làm, phải sai, rồi phải hiểu tại sao mình sai.***
 
@@ -105,7 +105,7 @@ git push origin feature/my-feature
 
 ## 📌 Trạng thái dự án
 
-### 🚧 StudyPro đang trong quá trình phát triển.
+### 🚧 BestStudyApp đang trong quá trình phát triển.
 
 *Các tính năng, giao diện và kiến trúc của ứng dụng có thể thay đổi đáng kể trong quá trình phát triển.*
 
@@ -113,7 +113,7 @@ git push origin feature/my-feature
 
 ## 💡 Philosophy
 
-StudyPro ***không*** cố biến việc học thành một trò chơi.
+**BestStudyApp** "***không***" cố biến việc học thành một trò chơi.
 
 Nó cố biến việc luyện tập kiến thức thành một thứ có thể **đo lường, phân tích và cải thiện**.
 
