@@ -68,9 +68,9 @@ Ví dụ:
 ### Một số tính năng có thể được bổ sung trong tương lai:
 
 - [ ] Ngân hàng câu hỏi.
-- [ ] Trộn câu hỏi và đáp án.
-- [ ] Chế độ luyện tập không giới hạn.
-- [ ] Chế độ thi có giới hạn thời gian.
+- [X] Trộn câu hỏi và đáp án.
+- [X] Chế độ luyện tập không giới hạn.
+- [X] Chế độ thi có giới hạn thời gian.
 - [ ] Phân tích điểm yếu của người học.
 - [ ] Hệ thống cấp độ / XP.
 - [ ] Bảng xếp hạng.
