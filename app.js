@@ -425,8 +425,70 @@ function bindImportActions() {
     URL.revokeObjectURL(a.href);
     toast('Đã xuất file sao lưu', 'ok');
   };
-}
 
+  // ===== NẠP TỪ FILE .JSON =====
+  const fileInput = $('importFile');
+  const btnFile   = $('btnImportFile');
+
+  async function loadFileIntoArea(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {           // chặn file > 10MB
+      toast('File quá lớn (>10MB)', 'err');
+      return;
+    }
+    if (!/\.json$/i.test(file.name) && file.type !== 'application/json') {
+      toast('Chỉ nhận file .json', 'err');
+      return;
+    }
+    try {
+      const text = await file.text();
+      $('importArea').value = text;
+      toast(`Đã tải "${file.name}" (${(file.size / 1024).toFixed(1)} KB) — bấm Nhập để xác nhận`, 'ok');
+    } catch (err) {
+      toast('Không đọc được file: ' + err.message, 'err');
+    }
+  }
+
+  if (btnFile && fileInput) {
+    btnFile.onclick = () => { playClick(); fileInput.click(); };
+    fileInput.onchange = async () => {
+      await loadFileIntoArea(fileInput.files[0]);
+      fileInput.value = '';                         // reset để chọn lại cùng file vẫn chạy
+    };
+  }
+
+  // ===== KÉO–THẢ FILE VÀO MODAL =====
+  const modalImport = $('modalImport');
+  if (modalImport) {
+    // Đếm dragenter/dragleave để tránh nhấp nháy khi rê qua phần tử con
+    let dragDepth = 0;
+
+    modalImport.addEventListener('dragenter', e => {
+      e.preventDefault();
+      dragDepth++;
+      modalImport.classList.add('drag-over');
+    });
+
+    modalImport.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    });
+
+    modalImport.addEventListener('dragleave', e => {
+      e.preventDefault();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) modalImport.classList.remove('drag-over');
+    });
+
+    modalImport.addEventListener('drop', async e => {
+      e.preventDefault();
+      dragDepth = 0;
+      modalImport.classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      await loadFileIntoArea(file);
+    });
+  }
+}
 /* =========================================================
    NORMALIZE ( BÌNH THƯỜNG HOÁ )
    ========================================================= */
