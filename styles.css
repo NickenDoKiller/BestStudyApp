@@ -1398,7 +1398,21 @@ textarea {
   opacity: 0;
   transition: transform .28s cubic-bezier(.34, 1.4, .5, 1), opacity .22s ease;
 }
+/* Drag-over highlight — selector khớp HTML thực tế */
+#modalImport.drag-over .modal {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  transform: translateY(0) scale(1.02);
+  transition: transform .18s ease, background .18s ease, outline-color .18s ease;
+}
 
+#modalImport.drag-over .modal::after {
+  /* đổi quầng sáng góc phải sang accent để nhìn rõ hơn khi hover */
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--accent) 35%, transparent),
+    transparent 70%);
+}
 .modal-back.show .modal {
   transform: translateY(0) scale(1);
   opacity: 1
@@ -2533,7 +2547,7 @@ textarea {
   color: var(--footer-link-hover-color);
   transform: scale(1.2);
   transition: transform 0.2s ease-in-out;
-
+}
   /* Media query for medium screens and up (tablets, desktops) */
   @media (min-width: 576px) {
     .footer-minimal__container {
