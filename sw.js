@@ -1,7 +1,7 @@
 /* =========================================================
    Service Worker — Cache toàn bộ app để chạy offline
    ========================================================= */
-const CACHE_VERSION = 'study-v6';   // ⭐ đổi số này khi muốn force update
+const CACHE_VERSION = 'study-v7';   // ⭐ đổi số này khi muốn force update
 const CACHE_NAME = CACHE_VERSION;
 
 // Danh sách file cần cache
