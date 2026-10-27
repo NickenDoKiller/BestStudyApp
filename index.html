@@ -87,7 +87,9 @@
           <div class="brand"><span class="dot"></span>StudyPro</div>
           <div class="topbar-right">
             <button class="btn sm" id="btnGames">🎮 Giải trí</button>
-            <button class="btn sm" id="btnHomeCheatsheet" style="background:rgba(78,161,255,.15);color:#4ea1ff;border:1px solid rgba(78,161,255,.3);">📘 Cheatsheet</button>
+            <button class="btn sm" id="btnHomeCheatsheet"
+              style="background:rgba(78,161,255,.15);color:#4ea1ff;border:1px solid rgba(78,161,255,.3);">📘
+              Cheatsheet</button>
             <div class="themes" id="themes"></div>
           </div>
         </div>
@@ -130,24 +132,30 @@
             <button class="btn sm ghost" id="btnExport">⬇ Xuất dữ liệu</button>
             <button class="btn ghost" id="btnImportOpen">📋 Import JSON</button>
             <button class="btn primary" id="btnCreateNew">✨ Tạo mới</button>
-          </div>  
+          </div>
         </div>
 
         <div class="exam-list" id="examList"></div>
-        
 
-                <div class="sec-head" style="margin-top:30px">
+
+        <div class="sec-head" style="margin-top:30px">
           <div class="sec-title">🕘 Lịch sử gần đây</div>
-          <button class="btn sm danger" id="btnResetHistory" style="background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.3);">🗑️ Xoá lịch sử</button>
+          <button class="btn sm danger" id="btnResetHistory"
+            style="background:rgba(239,68,68,0.1); color:var(--bad); border:1px solid rgba(239,68,68,0.3);">🗑️ Xoá lịch
+            sử</button>
         </div>
         <div class="exam-list" id="historyList"></div>
 
         <!-- DANGER ZONE -->
-        <div class="danger-zone" style="margin-top:50px; padding:20px; border:1px dashed rgba(239,68,68,0.4); border-radius:16px; background:rgba(239,68,68,0.03); margin-bottom:40px;">
+        <div class="danger-zone"
+          style="margin-top:50px; padding:20px; border:1px dashed rgba(239,68,68,0.4); border-radius:16px; background:rgba(239,68,68,0.03); margin-bottom:40px;">
           <div style="font-weight:800;color:var(--bad);margin-bottom:8px;font-size:15px;">☢️ Vùng Nguy Hiểm</div>
-          <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Các hành động dưới đây sẽ xoá dữ liệu vĩnh viễn. Hãy cân nhắc kỹ hoặc bấm <b>Xuất dữ liệu</b> để sao lưu trước khi thực hiện.</p>
+          <p style="font-size:13.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;">Các hành động dưới đây sẽ
+            xoá dữ liệu vĩnh viễn. Hãy cân nhắc kỹ hoặc bấm <b>Xuất dữ liệu</b> để sao lưu trước khi thực hiện.</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn" id="btnResetAll" style="background:rgba(239,68,68,0.15);color:var(--bad);border:1px solid rgba(239,68,68,0.4);">☢️ Xoá toàn bộ dữ liệu</button>
+            <button class="btn" id="btnResetAll"
+              style="background:rgba(239,68,68,0.15);color:var(--bad);border:1px solid rgba(239,68,68,0.4);">☢️ Xoá toàn
+              bộ dữ liệu</button>
           </div>
         </div>
     </section>
@@ -174,37 +182,37 @@
     </section>
 
     <!-- ============= SCREEN: SỬA ĐỀ ============= -->
-<div class="screen" id="screen-edit">
-  <header class="topbar">
-    <button class="btn ghost" id="editCancel">← Huỷ</button>
-    <div class="brand" style="font-size:16px">✏️ Sửa đề</div>
-    <button class="btn primary" id="editSave">💾 Lưu</button>
-  </header>
+    <div class="screen" id="screen-edit">
+      <header class="topbar">
+        <button class="btn ghost" id="editCancel">← Huỷ</button>
+        <div class="brand" style="font-size:16px">✏️ Sửa đề</div>
+        <button class="btn primary" id="editSave">💾 Lưu</button>
+      </header>
 
-  <main class="wrap">
-    <div class="edit-meta">
-      <label class="full">Tiêu đề
-        <input id="editTitle" class="input" type="text" placeholder="Tên đề...">
-      </label>
-      <label>Môn / chủ đề
-        <input id="editSubject" class="input" type="text" placeholder="VD: Vật lý">
-      </label>
-      <label>Thời gian (phút, 0 = không giới hạn)
-        <input id="editDuration" class="input" type="number" min="0" step="1" value="0">
-      </label>
-      <label class="check"><input id="editShuffleQ" type="checkbox"> 🔀 Xáo câu hỏi</label>
-      <label class="check"><input id="editShuffleO" type="checkbox"> 🔀 Xáo đáp án MCQ</label>
+      <main class="wrap">
+        <div class="edit-meta">
+          <label class="full">Tiêu đề
+            <input id="editTitle" class="input" type="text" placeholder="Tên đề...">
+          </label>
+          <label>Môn / chủ đề
+            <input id="editSubject" class="input" type="text" placeholder="VD: Vật lý">
+          </label>
+          <label>Thời gian (phút, 0 = không giới hạn)
+            <input id="editDuration" class="input" type="number" min="0" step="1" value="0">
+          </label>
+          <label class="check"><input id="editShuffleQ" type="checkbox"> 🔀 Xáo câu hỏi</label>
+          <label class="check"><input id="editShuffleO" type="checkbox"> 🔀 Xáo đáp án MCQ</label>
+        </div>
+
+        <div id="editQuestions"></div>
+
+        <div class="edit-add-bar">
+          <button class="btn" data-add="mcq">＋ Trắc nghiệm</button>
+          <button class="btn" data-add="truefalse">＋ Đúng / Sai</button>
+          <button class="btn" data-add="short">＋ Trả lời ngắn</button>
+        </div>
+      </main>
     </div>
-
-    <div id="editQuestions"></div>
-
-    <div class="edit-add-bar">
-      <button class="btn" data-add="mcq">＋ Trắc nghiệm</button>
-      <button class="btn" data-add="truefalse">＋ Đúng / Sai</button>
-      <button class="btn" data-add="short">＋ Trả lời ngắn</button>
-    </div>
-  </main>
-</div>
 
     <!-- ============ RESULT ============ -->
     <section id="screen-result" class="screen">
@@ -252,9 +260,10 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
           <button class="btn primary" id="btnRedo">🔄 Làm lại</button>
           <button class="btn" id="btnHome">🏠 Về trang chủ</button>
-          <button class="btn" id="btnOpenCheatsheet" style="background:rgba(78,161,255,.15);color:#4ea1ff;border:1px solid rgba(78,161,255,.3);">
-    📘 Mở Cheatsheet
-  </button>
+          <button class="btn" id="btnOpenCheatsheet"
+            style="background:rgba(78,161,255,.15);color:#4ea1ff;border:1px solid rgba(78,161,255,.3);">
+            📘 Mở Cheatsheet
+          </button>
         </div>
 
         <div class="sec-head">
@@ -278,6 +287,54 @@
   </div>
 
   <div id="toast"></div>
+
+  <!--
+  MINIMALIST SINGLE-LINE FOOTER
+  ==================================================================
+  -->
+  <footer class="footer-minimal" role="contentinfo">
+    <div class="footer-minimal__container">
+
+      <p class="footer-minimal__copyright">
+        &copy; 2026 This App By NDK. All Rights Reserved.
+      </p>
+
+      <nav class="footer-minimal__nav" aria-label="Footer Social Media Links">
+        <ul>
+          <li>
+            <a href="#" aria-label="Our Twitter Profile">
+              <!-- SVG icon for Twitter -->
+              <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <title>Twitter</title>
+                <path
+                  d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.223.085 4.93 4.93 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+              </svg>
+            </a>
+          </li>
+          <li>
+            <a href="#" aria-label="Our LinkedIn Profile">
+              <!-- SVG icon for LinkedIn -->
+              <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <title>LinkedIn</title>
+                <path
+                  d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
+              </svg>
+            </a>
+          </li>
+          <li>
+            <a href="#" aria-label="Our GitHub Profile">
+              <!-- SVG icon for GitHub -->
+              <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <title>GitHub</title>
+                <path
+                  d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+              </svg>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </footer>
 
 </body>
 
